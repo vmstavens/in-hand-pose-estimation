@@ -2,7 +2,7 @@
 <launch>
 
 	<!-- comment telling which node is being launched below -->
-	<node pkg="sr_vms" type="sr_test" name="sr_test" ...>
+	<node pkg="sr_tactile_image" type="sr_test" name="sr_test" ...>
 		<!-- <param name="param-name-1" value="static-value">
 		<param name="param-name-2" value="$(arg name1)">
 		...

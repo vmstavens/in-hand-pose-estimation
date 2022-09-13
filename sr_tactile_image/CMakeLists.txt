@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(sr_vms)
+project(sr_tactile_image)
 
 # C++17
 set(CMAKE_CXX_STANDARD 17)
@@ -50,8 +50,8 @@ include_directories(
 # # REMEMBER TO ADD TO INSTALL TARGETS (bottom of file) !!!
 
 
-# # add_library(sr_vms_test src/sr_vms_test.cpp)
-# # target_link_libraries(sr_vms_test ${catkin_LIBRARIES})
+# # add_library(sr_tactile_image_test src/sr_tactile_image_test.cpp)
+# # target_link_libraries(sr_tactile_image_test ${catkin_LIBRARIES})
 
 # ################################################################################################
 
@@ -64,7 +64,7 @@ target_link_libraries(sr_test ${catkin_LIBRARIES})
 # # target_link_libraries(pipeline ${catkin_LIBRARIES} teleop_grasp)
 
 # add_executable(sr_hand_test src/sr_hand_test.cpp)
-# target_link_libraries(sr_hand_test ${catkin_LIBRARIES} sr_vms)
+# target_link_libraries(sr_hand_test ${catkin_LIBRARIES} sr_tactile_image)
 
 # ################################################################################################
 
