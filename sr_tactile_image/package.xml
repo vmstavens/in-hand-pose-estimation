@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package format="2">
+
+	<name>sr_vms</name>
+	<version>1.0.0</version>
+	<description>Test control of shadow hand</description>
+
+	<author email="vista17@student.sdu.dk">Victor Melbye Staven</author>
+	<maintainer email="vista17@student.sdu.dk">Victor Melbye Staven</maintainer>
+
+	<license>BSD</license>
+
+	<!-- <url type="repository">https://github.com/teleop-grasp/teleop_grasp</url> -->
+
+	<!-- build tool -->
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<!-- libraries -->
+	<depend>eigen</depend>
+
+	<!-- ROS packages -->
+	<depend>roscpp</depend>
+	<!-- <depend>roslib</depend>
+	<depend>gazebo_ros</depend>
+	<depend>ros_utils</depend>
+	<depend>cv_camera</depend>
+	<depend>franka_controllers</depend>
+	<depend>franka_gripper</depend>
+	<depend>hand_tracking</depend> -->
+
+	<!-- <export> -->
+		<!-- https://github.com/sloretz/gazebo_model_path_example -->
+		<!-- <gazebo_ros gazebo_model_path="${prefix}/models"/>
+		<gazebo_ros gazebo_media_path="${prefix}/worlds"/>
+	</export> -->
+
+</package>
