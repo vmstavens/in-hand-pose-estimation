@@ -1,4 +1,4 @@
-# in-hand-pose-estimation
+# in_hand_pose_estimation
 
 A meta-package which performs in-hand pose estimation 
 
