@@ -1,0 +1,5 @@
+
+<launch>
+	<!-- comment telling which node is being launched below -->
+	<node pkg="sr_tactile_image" type="sr_test" name="sr_test" />
+</launch>

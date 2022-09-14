@@ -10,6 +10,8 @@ find_package(
 	catkin REQUIRED
 	COMPONENTS
 		roscpp
+		sr_robot_msgs
+		sr_hand
 )
 
 # find system libraries
@@ -21,20 +23,11 @@ catkin_package(
 		include
 		${EIGEN3_INCLUDE_DIR}
 	LIBRARIES
-		# sr_hand_test
-		# teleop_grasp
+		sr_test
 	CATKIN_DEPENDS
 		roscpp
-		# roslib
-		# gazebo_ros
-		# ros_utils
-		# cv_camera
-		# franka_controllers
-		# franka_gripper
-		# hand_tracking
 	DEPENDS
 		EIGEN3 # uppercase due to catkin_package() warning
-		# Boost
 )
 
 # additional locations of header files
@@ -42,73 +35,59 @@ include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIRS}
-	# ${Boost_INCLUDE_DIRS}
 )
 ################################################################################################
 
-# # libraries
-# # REMEMBER TO ADD TO INSTALL TARGETS (bottom of file) !!!
+# libraries
+# REMEMBER TO ADD TO INSTALL TARGETS (bottom of file) !!!
 
-
-# # add_library(sr_tactile_image_test src/sr_tactile_image_test.cpp)
-# # target_link_libraries(sr_tactile_image_test ${catkin_LIBRARIES})
+# add_library(sr_tactile_image_test src/sr_tactile_image_test.cpp)
+# target_link_libraries(sr_tactile_image_test ${catkin_LIBRARIES})
 
 # ################################################################################################
 
-# # nodes (executables)
+# nodes (executables)
 
 add_executable(sr_test src/sr_test.cpp)
 target_link_libraries(sr_test ${catkin_LIBRARIES})
 
-# # add_executable(pipeline src/pipeline.cpp)
-# # target_link_libraries(pipeline ${catkin_LIBRARIES} teleop_grasp)
+################################################################################################
 
-# add_executable(sr_hand_test src/sr_hand_test.cpp)
-# target_link_libraries(sr_hand_test ${catkin_LIBRARIES} sr_tactile_image)
+# install targets
 
-# ################################################################################################
+## executables and/or libraries for installation
+install(
+	TARGETS
+		sr_test
+	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
 
-# # install targets
+## install header files
+install(
+	DIRECTORY
+		include/sr_test/
+	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
-# ## executables and/or libraries for installation
-# install(
-# 	TARGETS
-# 		sr_hand_test
-# 		# teleop_grasp
-# 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-# 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-# 	RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-# )
+## install gazebo stuff
+install(DIRECTORY models DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY worlds DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
-# ## install header files
-# install(
-# 	DIRECTORY
-# 		include/sr_hand_test/
-# 		# include/teleop_grasp/
-# 	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-# )
+install(DIRECTORY launch
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
-# ## install gazebo stuff
-# install(DIRECTORY models DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-# install(DIRECTORY worlds DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+################################################################################################
 
-# install(DIRECTORY launch
-# 	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+# experiments (executables from /tests)
 
-# install(DIRECTORY config
-# 	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
-# ################################################################################################
-
-# # experiments (executables from /tests)
-
-# # message(STATUS "Addings experiments from 'tests/*/*.cpp'...")
-# # file(GLOB files CONFIGURE_DEPENDS "tests/*/*.cpp")
-# # foreach(file ${files})
-# # 	get_filename_component(name ${file} NAME_WE)
-# # 	message(STATUS "Found experiment: ${name}...")
-# # 	add_executable(${name} ${file})
-# # 	target_link_libraries(${name} ${catkin_LIBRARIES} teleop_grasp)
-# # endforeach()
+message(STATUS "Addings experiments from 'tests/*/*.cpp'...")
+file(GLOB files CONFIGURE_DEPENDS "tests/*/*.cpp")
+foreach(file ${files})
+	get_filename_component(name ${file} NAME_WE)
+	message(STATUS "Found experiment: ${name}...")
+	add_executable(${name} ${file})
+	target_link_libraries(${name} ${catkin_LIBRARIES} teleop_grasp)
+endforeach()
