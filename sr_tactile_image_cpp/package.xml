@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
 
-	<name>sr_tactile_image</name>
+	<name>sr_tactile_image_cpp</name>
 	<version>1.0.0</version>
-	<description>sr_tactile_image desciption</description>
+	<description>sr_tactile_image_cpp desciption</description>
 
 	<author email="vista17@student.sdu.dk">Victor Melbye Staven</author>
 	<maintainer email="vista17@student.sdu.dk">Victor Melbye Staven</maintainer>
@@ -14,6 +14,6 @@
 	<buildtool_depend>catkin</buildtool_depend>
 
 	<!-- ROS packages -->
-	<depend>rospy</depend>
+	<depend>roscpp</depend>
 
 </package>
