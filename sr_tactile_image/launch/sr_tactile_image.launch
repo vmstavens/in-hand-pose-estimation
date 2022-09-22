@@ -9,21 +9,28 @@
   <arg name="verbose"      default="true" />
   <arg name="hand_id"      default="rh" />
   <arg name="hand_serial"  default="1234"/>
+  <!-- position of the hand's spawn point -->
   <arg name="pos"          default="-x 0.0 -y 0.0 -z 1.0"/>
+  <!-- orientation of the hand's spawn point, measured radians in WORLD Roll-Pitch-Yaw (1.57 = pi/2 = 90 deg)  -->
   <arg name="ori"          default="-R 1.57 -P -1.57 -Y 0.0"/>
+  <!-- gravity is disabled in order to make probing simpler -->
+  <arg name="gravity"      default="false"/>
 
-	<node pkg="sr_tactile_image_cpp" type="sr_test_cpp" name="sr_test_cpp" />
+  <!-- test echo node -->
+	<node pkg="sr_tactile_image" type="sr_tactile_image" name="sr_tactile_image" />
 
-  <include file="$(find sr_tactile_image_cpp)/launch/sr_test_better_arguments.launch">
-    <arg name="paused" value="$(arg paused)" />
+  <!-- shadow hand launch file -->
+  <include file="$(find sr_tactile_image)/launch/shadowhand.launch">
+    <arg name="paused"       value="$(arg paused)" />
     <arg name="use_sim_time" value="$(arg use_sim_time)" />
-    <arg name="gui" value="$(arg gui)" />
-    <arg name="headless" value="$(arg headless)" />
-    <arg name="debug" value="$(arg debug)" />
-    <arg name="verbose" value="$(arg verbose)" />
-    <arg name="hand_id" value="$(arg hand_id)" />
-    <arg name="hand_serial" value="$(arg hand_serial)"/>
-    <arg name="pos" value="$(arg pos)"/>
-    <arg name="ori" value="$(arg ori)"/>
+    <arg name="gui"          value="$(arg gui)" />
+    <arg name="headless"     value="$(arg headless)" />
+    <arg name="debug"        value="$(arg debug)" />
+    <arg name="verbose"      value="$(arg verbose)" />
+    <arg name="hand_id"      value="$(arg hand_id)" />
+    <arg name="hand_serial"  value="$(arg hand_serial)"/>
+    <arg name="pos"          value="$(arg pos)"/>
+    <arg name="ori"          value="$(arg ori)"/>
+    <arg name="gravity"      value="$(arg gravity)"/>
   </include>
 </launch>

@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
 
-	<name>sr_tactile_image_cpp</name>
+	<name>sr_tactile_image</name>
 	<version>1.0.0</version>
-	<description>sr_tactile_image_cpp desciption</description>
+	<description>sr_tactile_image desciption</description>
 
 	<author email="vista17@student.sdu.dk">Victor Melbye Staven</author>
 	<maintainer email="vista17@student.sdu.dk">Victor Melbye Staven</maintainer>
@@ -15,5 +15,11 @@
 
 	<!-- ROS packages -->
 	<depend>roscpp</depend>
+
+	<!-- so gazebo can find the models in in_hand_pose_estimation -->
+	<export>
+		<gazebo_ros gazebo_model_path="${prefix}/models"/>
+		<gazebo_ros gazebo_media_path="${prefix}/models"/>
+	</export>
 
 </package>

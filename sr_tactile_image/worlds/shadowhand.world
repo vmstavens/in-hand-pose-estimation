@@ -4,6 +4,24 @@
     <include>
       <uri>model://ground_plane</uri>
     </include>
+
+    <!-- <geometry>
+      <uri>file:///home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/</uri>
+    </geometry> -->
+      <!-- <visual name="visual">
+        <geometry>
+          <box>
+            <size>1 1 1</size>
+          </box>
+        </geometry>
+      </visual> -->
+
+
+    <!-- <geometry>
+      <uri>model://pen_black/model.sdf</uri>
+    </geometry> -->
+
+
     <light type="directional" name="light">
       <pose frame=''>0 -4 2.5 1.0 0 0</pose>
       <diffuse>1.0 1.0 1.0 1</diffuse>
@@ -19,12 +37,8 @@
     </light>
 
     <physics type="ode">
-      <!-- gravity tags -->
-      <!-- With gravity -->
       <!-- <gravity>0.000000 0.000000 -9.810000</gravity> -->
-      <!-- Without gravity -->
       <gravity>0.000000 0.000000 0.00001</gravity>
-      <!-- <gravity>0.000000 0.000000 0.000000</gravity> -->
       <ode>
         <solver>
           <type>quick</type>
