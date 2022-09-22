@@ -1,0 +1,29 @@
+
+<launch>
+
+  <arg name="paused"       default="false" />
+  <arg name="use_sim_time" default="true" />
+  <arg name="gui"          default="true" />
+  <arg name="headless"     default="false" />
+  <arg name="debug"        default="false" />
+  <arg name="verbose"      default="true" />
+  <arg name="hand_id"      default="rh" />
+  <arg name="hand_serial"  default="1234"/>
+  <arg name="pos"          default="-x 0.0 -y 0.0 -z 1.0"/>
+  <arg name="ori"          default="-R 1.57 -P -1.57 -Y 0.0"/>
+
+	<node pkg="sr_tactile_image_cpp" type="sr_test_cpp" name="sr_test_cpp" />
+
+  <include file="$(find sr_tactile_image_cpp)/launch/sr_test_better_arguments.launch">
+    <arg name="paused" value="$(arg paused)" />
+    <arg name="use_sim_time" value="$(arg use_sim_time)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="headless" value="$(arg headless)" />
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="verbose" value="$(arg verbose)" />
+    <arg name="hand_id" value="$(arg hand_id)" />
+    <arg name="hand_serial" value="$(arg hand_serial)"/>
+    <arg name="pos" value="$(arg pos)"/>
+    <arg name="ori" value="$(arg ori)"/>
+  </include>
+</launch>

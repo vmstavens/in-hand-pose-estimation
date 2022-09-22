@@ -1,5 +1,0 @@
-
-<launch>
-	<!-- comment telling which node is being launched below -->
-	<node pkg="sr_tactile_image_cpp" type="sr_test_cpp" name="sr_test_cpp" />
-</launch>
