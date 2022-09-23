@@ -10,7 +10,7 @@
 
 	<license>BSD</license>
 
-	<url type="repository">https://github.com/vmstavens/in-hand-pose-estimation</url>
+	<url type="repository">https://github.com/vmstavens/in_hand_pose_estimation</url>
 
 	<buildtool_depend>catkin</buildtool_depend>
 

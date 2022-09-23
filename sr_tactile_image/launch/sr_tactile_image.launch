@@ -1,12 +1,19 @@
 
 <launch>
 
+  <!-- add model path to Gazebo -->
+  <env name="GAZEBO_MODEL_PATH" value="/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/models/"/>
+  <!-- <env name="GAZEBO_MODEL_PATH" value="$(find in_hand_pose_estimation)/models/"/> -->
+
+  <!-- Gazebo std inputs -->
   <arg name="paused"       default="false" />
   <arg name="use_sim_time" default="true" />
   <arg name="gui"          default="true" />
   <arg name="headless"     default="false" />
   <arg name="debug"        default="false" />
   <arg name="verbose"      default="true" />
+
+  <!-- shadow hand specific -->
   <arg name="hand_id"      default="rh" />
   <arg name="hand_serial"  default="1234"/>
   <!-- position of the hand's spawn point -->
