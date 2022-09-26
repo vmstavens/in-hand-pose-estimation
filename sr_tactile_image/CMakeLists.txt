@@ -11,6 +11,7 @@ find_package(
 	COMPONENTS
 		roscpp
 		sr_robot_msgs
+		sr_utilities
 		sr_hand
 )
 
@@ -26,6 +27,9 @@ catkin_package(
 		sr_tactile_image
 	CATKIN_DEPENDS
 		roscpp
+		sr_robot_msgs
+		sr_utilities
+		sr_hand
 	DEPENDS
 		EIGEN3 # uppercase due to catkin_package() warning
 )

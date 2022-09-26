@@ -15,5 +15,8 @@
 
 	<!-- ROS packages -->
 	<depend>roscpp</depend>
+	<depend>sr_utilities</depend>
+	<depend>sr_robot_msgs</depend>
+	<depend>sr_hand</depend>
 
 </package>
