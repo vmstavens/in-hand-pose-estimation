@@ -1,0 +1,61 @@
+
+<launch>
+	
+	<!-- // Boiler plate arguments ///////////////////////////////////////////////////////////////////////// -->
+
+	<!-- if the simulation should start paused -->
+	<arg name="paused" default="false" />
+	<!-- if gazebo should be launched to show the robot hand -->
+	<arg name="gui" default="false" />
+	<!-- be able to print with info -->
+	<arg name="output" default="screen"/>
+	
+	<!-- // Shadow specific arguments ///////////////////////////////////////////////////////////////////////// -->
+	
+	<!-- use hand in simulation -->
+	<arg name="hand" default="true"/>
+	<!-- position of the hand's spawn point -->
+	<arg name="init_pos" default="-x 0.0 -y 0.0 -z 1.0"/>
+	<!-- orientation of the hand's spawn point, measured radians in WORLD Roll-Pitch-Yaw (1.57 = pi/2 = 90 deg)  -->
+	<arg name="init_ori" default="-R 1.57 -P -1.57 -Y 0.0"/>
+	<!-- biotac -->
+	<arg name="biotac" default="true"/>
+	<arg if="$(arg biotac)" name="tip_sensors" value="bt_sp"/>
+	<arg unless="$(arg biotac)" name="tip_sensors" default="th=pst,ff=pst,mf=pst,rf=pst,lf=pst" />
+	<!-- start in home pose, since we are setting a new pose, this is false -->
+	<arg name="start_home" default="false"/>
+
+	<!-- // World specific arguments ///////////////////////////////////////////////////////////////////////// -->
+
+	<!-- gravity is disabled in order to make probing simpler -->
+	<arg name="gravity" default="false"/>
+	<arg name="model_path" default="$(find sr_tactile_perception)/../models/"/>
+
+	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
+
+	<!-- testing node -->
+	<node pkg="sr_tactile_perception" name="test" type="test.py" output="$(arg output)"/>
+	<!-- <node pkg="sr_tactile_perception" name="echo" type="echo.py"/> -->
+
+	<!-- // Load in world ///////////////////////////////////////////////////////////////////////// -->
+
+	<!-- black pen prop is included in these files -->
+	<arg if="$(arg gravity)" name="world_name" value="$(find sr_tactile_perception)/../worlds/sr_tac_percep_wo_g.world" />
+	<arg unless="$(arg gravity)" name="world_name" value="$(find sr_tactile_perception)/../worlds/sr_tac_percep_wo_g.world" />
+
+	<!-- // Load in simulation models ///////////////////////////////////////////////////////////////////////// -->
+	
+	<!-- add shadow hand model -->
+	<include file="$(find sr_tactile_perception)/../launch/tipe_srhand.launch">
+		<arg name="gui" value="$(arg gui)"/>
+		<arg name="arm" value="false"/>
+		<arg name="hand" value="true"/>
+		<arg name="start_home" value="$(arg start_home)"/>
+		<arg name="init_pos" value="$(arg init_pos)"/>
+		<arg name="init_ori" value="$(arg init_ori)"/>
+		<arg name="world_name" value="$(arg world_name)"/>
+		<arg name="tip_sensors" value="$(arg tip_sensors)"/>
+		<arg name="model_path" value="$(arg model_path)"/>
+	</include>
+
+</launch>

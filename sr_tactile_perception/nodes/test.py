@@ -1,47 +1,57 @@
 #!/usr/bin/env python3
-#
-# Copyright 2020 Shadow Robot Company Ltd.
-#
-# This program is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the Free
-# Software Foundation version 2 of the License.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-# more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program. If not, see <http://www.gnu.org/licenses/>.
 
-# from __future__ import absolute_import
-# from builtins import input
-# import rospy
-# import rospkg
-# from sr_run_trajectories.run_trajectories import SrRunTrajectories
+from __future__ import absolute_import
+import rospy
+from sr_robot_commander.sr_hand_commander import SrHandCommander
+from sr_utilities.hand_finder import HandFinder
+import time
 
+see_me = "##################################################################################################################"
 
-# if __name__ == "__main__":
-#     rospy.init_node('run_hand_poses')
-#     hand_type = rospy.get_param('~hand_type', 'hand_e')
-#     biotac = rospy.get_param('~biotac', False)
+rospy.init_node("test", anonymous=True)
+rospy.logerr("testing1...")
+hand_finder = HandFinder()
+rospy.logerr("testing2...")
 
-#     # TODO: Extend with more hand types if necessary
-#     if 'hand_e' == hand_type:
-#         poses_yaml_file_name = 'hand_poses_to_test_hand_e'
-#         if biotac:
-#             poses_yaml_file_name += '_biotac'
-#     else:
-#         raise ValueError("Unknown hand type!")
+while (True):
+    time.sleep(1.0)
 
-#     trajectories_file_path = rospkg.RosPack().get_path('sr_pose_tests') + '/config/{}.yaml'.format(poses_yaml_file_name)
-#     srt = SrRunTrajectories(trajectories_file_path, arm=False)
+    hand_parameters = hand_finder.get_hand_parameters()
+    
+    hand_serial = list(hand_parameters.mapping.keys())[0]
+    rospy.loginfo(f"{hand_serial=} {see_me}")
+    
+    rospy.loginfo(f"{hand_parameters=} | {hand_serial=}")
+    
+    hand_commander = SrHandCommander(hand_parameters=hand_parameters,hand_serial=hand_serial)
+    # rospy.logdebug(f"{hand_commander=}...")
 
-#     for pose in srt._hand_trajectories:
-#         if 'open' == pose:
-#             continue
-#         input("About to go to pose {}. Press [RETURN] to execute...".format(pose))
-#         srt.run_trajectory('hand', pose)
-#         input("Press [RETURN] to go back to open pose")
-#         srt.run_trajectory('hand', 'open')
-#     rospy.loginfo("All poses have been tested. Exiting.")
+    rospy.sleep(1.0)
+
+    # rospy.logerr("Tactile type: ", hand_commander.get_tactile_type())
+    # rospy.logerr("Tactile state: ", hand_commander.get_tactile_state())
+    
+    # hand_parameters = hand_finder.get_hand_parameters()
+    # hand_serial = hand_parameters.mapping.keys()
+
+    # rospy.logerr(hand_parameters.mapping)
+
+    # # If name is not provided, it will set "right_hand" or "left_hand" by default, depending on the hand.
+    # hand_commander = SrHandCommander(name = "rh_first_finger",
+    #                                  hand_parameters=hand_parameters,
+    #                                  hand_serial=hand_serial)
+
+    # # # Alternatively you can launch the hand directly
+    # # hand_commander = SrHandCommander(name = "right_hand", prefix = "rh")
+
+    # hand_joints_effort = hand_commander.get_joints_effort()
+    # rospy.logerr("Hand joints effort \n " + str(hand_joints_effort) + "\n")
+
+    # tactile_state = hand_commander.get_tactile_state()
+    # rospy.logerr("Hand tactile state\n" + str(tactile_state) + "\n")
+
+    # tactile_type = hand_commander.get_tactile_type()
+
+    # rospy.logerr(tactile_type)
+
+    # rospy.logerr("Hand tactile type\n" + tactile_type + "\n")

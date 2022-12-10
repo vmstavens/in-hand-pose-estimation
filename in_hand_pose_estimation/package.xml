@@ -15,7 +15,6 @@
 	<buildtool_depend>catkin</buildtool_depend>
 
 	<exec_depend>sr_tactile_perception</exec_depend>
-	<exec_depend>biotac_gazebo_plugin</exec_depend>
 
 	<export>
 		<metapackage />
