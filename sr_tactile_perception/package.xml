@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
 
-	<name>sr_tactile_image</name>
+	<name>sr_tactile_perception</name>
 	<version>1.0.0</version>
 	<description>sr_tactile_image desciption</description>
 
@@ -14,9 +14,6 @@
 	<buildtool_depend>catkin</buildtool_depend>
 
 	<!-- ROS packages -->
-	<depend>roscpp</depend>
-	<depend>sr_utilities</depend>
-	<depend>sr_robot_msgs</depend>
-	<depend>sr_hand</depend>
+	<depend>rospy</depend>
 
 </package>
