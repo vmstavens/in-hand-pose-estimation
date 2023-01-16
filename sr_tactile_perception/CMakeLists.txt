@@ -6,8 +6,9 @@ find_package(
 	catkin REQUIRED
 	COMPONENTS
 		rospy
+		ros_utils_py
 		# sr_robot_commander
-		# sr_utils
+		# ros_utils_py
 		# sr_robot_msgs
 		# sr_hand
 )
@@ -16,9 +17,11 @@ find_package(
 catkin_package(
 	INCLUDE_DIRS
 	LIBRARIES
-		sr_test
+		${PROJECT_NAME}
+	# sr_test
 	CATKIN_DEPENDS
 		rospy
+		ros_utils_py
 	DEPENDS
 )
 
