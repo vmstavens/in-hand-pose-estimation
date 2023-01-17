@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(sr_tactile_perception)
+project(shadow_hand)
 
 # find catkin and any catkin packages
 find_package(
@@ -7,19 +7,15 @@ find_package(
 	COMPONENTS
 		rospy
 		ros_utils_py
-		shadow_hand
 )
 
 # declare a catkin package
 catkin_package(
 	INCLUDE_DIRS
 	LIBRARIES
-		${PROJECT_NAME}
-	# sr_test
 	CATKIN_DEPENDS
 		rospy
 		ros_utils_py
-		shadow_hand
 	DEPENDS
 )
 
@@ -29,6 +25,7 @@ catkin_python_setup()
 ## install python nodes
 catkin_install_python(
   PROGRAMS 
-    scripts/sr_tactile_perception.py
+	src/ShadowHand/ShadowHand.py
+    examples/example.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

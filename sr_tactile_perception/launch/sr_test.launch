@@ -1,5 +1,0 @@
-
-<launch>
-	<!-- comment telling which node is being launched below -->
-	<node pkg="sr_tactile_perception" name="echo" type="echo.py" />
-</launch>

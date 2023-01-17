@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
 
-	<name>sr_tactile_perception</name>
+	<name>shadow_hand</name>
 	<version>1.0.0</version>
-	<description>sr_tactile_perception desciption</description>
+	<description>shadow_hand</description>
 
 	<author email="vista17@student.sdu.dk">Victor Melbye Staven</author>
 	<maintainer email="vista17@student.sdu.dk">Victor Melbye Staven</maintainer>
@@ -16,6 +16,5 @@
 	<!-- ROS packages -->
 	<depend>rospy</depend>
 	<depend>ros_utils_py</depend>
-	<depend>shadow_hand</depend>
 
 </package>
