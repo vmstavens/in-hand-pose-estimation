@@ -17,5 +17,6 @@
 	<depend>rospy</depend>
 	<depend>ros_utils_py</depend>
 	<depend>shadow_hand</depend>
+	<depend>gazebo_msgs</depend>
 
 </package>

@@ -6,8 +6,8 @@
 	<!-- if the simulation should start paused -->
 	<arg name="paused" default="false" />
 	<!-- if gazebo should be launched to show the robot hand -->
-	<!-- <arg name="gui" default="true" /> -->
-	<arg name="gui" default="false" />
+	<arg name="gui" default="true" />
+	<!-- <arg name="gui" default="false" /> -->
 	<!-- be able to print with info -->
 	<arg name="output" default="screen" />
 	
@@ -30,12 +30,13 @@
 
 	<!-- gravity is disabled in order to make probing simpler -->
 	<arg name="gravity" default="false" />
-	<arg name="props" default="false" />
+	<arg name="props" default="true" />
+	<!-- <arg name="props" default="false" /> -->
 	<arg name="model_path" default="$(find sr_tactile_perception)/../models/" />
 
 	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
 
-	<!-- testing node -->
+	<!-- tactile perception node node -->
 	<node pkg="sr_tactile_perception" name="sr_tactile_perception" type="sr_tactile_perception.py" output="$(arg output)" />
 
 	<!-- // Load in world ///////////////////////////////////////////////////////////////////////// -->
@@ -52,7 +53,7 @@
 	<!-- // Load in simulation models ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- add shadow hand model -->
-	<include file="$(find shadow_hand)/../launch/shadow_hand.launch">
+	<include file="$(find shadow_hand)/launch/shadow_hand.launch">
 		<arg name="gui" value="$(arg gui)"/>
 		<arg name="arm" value="false"/>
 		<arg name="hand" value="true"/>

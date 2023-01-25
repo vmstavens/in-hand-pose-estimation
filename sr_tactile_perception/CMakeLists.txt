@@ -8,6 +8,7 @@ find_package(
 		rospy
 		ros_utils_py
 		shadow_hand
+		gazebo_msgs
 )
 
 # declare a catkin package
@@ -20,6 +21,7 @@ catkin_package(
 		rospy
 		ros_utils_py
 		shadow_hand
+		gazebo_msgs
 	DEPENDS
 )
 

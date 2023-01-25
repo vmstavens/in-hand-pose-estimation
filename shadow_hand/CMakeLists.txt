@@ -25,7 +25,7 @@ catkin_python_setup()
 ## install python nodes
 catkin_install_python(
   PROGRAMS 
-	src/ShadowHand/ShadowHand.py
-    examples/example.py
+	# src/ShadowHand/ShadowHand.py
+    examples/demo_finger_control.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

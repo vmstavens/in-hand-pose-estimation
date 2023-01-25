@@ -62,6 +62,9 @@ class ShadowHand:
 			f"{self.__hand_chirality}_LF"
 		])
 
+		# subscribe and print the found contacts
+		# sub = rospy.Subscriber("/contacts/rh_ff/distal", ContactsState, callback=callback)
+
 	def get_hand_chirality(self) -> str:
 		"""gets the hand's chirality (e.g. lh or rh)
 
@@ -79,7 +82,7 @@ class ShadowHand:
 		return self.__joints
 
 	def set_finger(self, finger: ENUM_FINGERS, q: List[float]) -> bool:
-		"""sets the finger (FINGER) configuration to the one provided as q [base_joint, middle_joint, tip_joint]
+		"""sets the finger (FINGER) configuration to the one provided as q [tip_joint, middle_joint, base_joint]
 
 		Args:
 			FINGER (ENUM_FINGERS): One of the five fingers: THUMB, INDEX_FINGER, MIDDLE_FINGER, RING_FINGER or LITTLE_FINGER
