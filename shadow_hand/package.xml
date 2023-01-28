@@ -16,5 +16,6 @@
 	<!-- ROS packages -->
 	<depend>rospy</depend>
 	<depend>ros_utils_py</depend>
+	<depend>gazebo_msgs</depend>
 
 </package>

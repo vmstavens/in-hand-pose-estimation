@@ -27,20 +27,22 @@
 	<arg unless="$(arg biotac)" name="tip_sensors" default="th=pst,ff=pst,mf=pst,rf=pst,lf=pst" />
 	<!-- start in home pose, since we are setting a new pose, this is false -->
 	<arg name="start_home" default="false" />
+	<!-- load the biotac_sim_lib plugin -->
+	<arg name="biotac_sim" default="true" />
 
 	<!-- // World specific arguments
 	///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- gravity is disabled in order to make probing simpler -->
 	<arg name="gravity" default="false" />
-	<arg name="props" default="false" />
+	<arg name="props" default="true" />
 	<arg name="model_path" default="$(find sr_tactile_perception)/../models/" />
 
 	<!-- // Launch project nodes
 	///////////////////////////////////////////////////////////////////////// -->
 
-	<!-- testing node -->
-	<node pkg="shadow_hand" name="demo_finger_control" type="demo_finger_control.py" output="$(arg output)" />
+	<!-- finger_control_demo node -->
+	<node pkg="shadow_hand" name="finger_control_demo" type="finger_control_demo.py" output="$(arg output)" />
 
 	<!-- // Load in world ///////////////////////////////////////////////////////////////////////// -->
 
@@ -61,7 +63,7 @@
 	///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- add shadow hand model -->
-	<include file="$(find shadow_hand)/launch/shadow_hand.launch">
+	<include file="$(find shadow_hand)/robots/shadow_hand.launch">
 		<arg name="gui" value="$(arg gui)" />
 		<arg name="arm" value="false" />
 		<arg name="hand" value="true" />
@@ -71,6 +73,7 @@
 		<arg name="world_name" value="$(arg world_name)" />
 		<arg name="tip_sensors" value="$(arg tip_sensors)" />
 		<arg name="model_path" value="$(arg model_path)" />
+		<arg name="biotac_sim" value="$(arg biotac_sim)" />
 	</include>
 
 </launch>

@@ -7,6 +7,7 @@ find_package(
 	COMPONENTS
 		rospy
 		ros_utils_py
+		gazebo_msgs
 )
 
 # declare a catkin package
@@ -16,6 +17,7 @@ catkin_package(
 	CATKIN_DEPENDS
 		rospy
 		ros_utils_py
+		gazebo_msgs
 	DEPENDS
 )
 
@@ -25,7 +27,10 @@ catkin_python_setup()
 ## install python nodes
 catkin_install_python(
   PROGRAMS 
-	# src/ShadowHand/ShadowHand.py
-    examples/demo_finger_control.py
+    examples/finger_control_demo.py
+
+	
+    # src/shadow_hand/ShadowFinger.py
+    # src/shadow_hand/ContactPoint.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

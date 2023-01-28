@@ -17,11 +17,11 @@
 	<arg name="palm_sensor" />
 
 	<!-- load biotac simulated sensor plugin .......................................... -->
-	<arg name="bio_tac_sim" default="true" />
+	<arg name="biotac_sim" default="true" />
 
 	<!-- robot_descriptions -->
-	<arg     if="$(arg bio_tac_sim)" name="robot_description" value="'$(find shadow_hand)/robots/shadow_hand.urdf.xacro'" />
-	<arg unless="$(arg bio_tac_sim)" name="robot_description" value="'$(find sr_description)/robots/sr_hand.urdf.xacro'" />
+	<arg     if="$(arg biotac_sim)" name="robot_description" value="'$(find shadow_hand)/robots/shadow_hand.urdf.xacro'" />
+	<arg unless="$(arg biotac_sim)" name="robot_description" value="'$(find sr_description)/robots/sr_hand.urdf.xacro'" />
 
 	<arg unless="$(arg arm)" name="load_robot_description_command" value="xacro $(arg robot_description) hand_type:=$(arg hand_type) hand_version:=$(arg hand_version) side:=$(arg side) fingers:=$(arg fingers) tip_sensors:=$(arg tip_sensors) mid_sensors:=$(arg mid_sensors) prox_sensors:=$(arg prox_sensors) palm_sensor:=$(arg palm_sensor)" />
 

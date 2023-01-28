@@ -5,23 +5,15 @@ import time
 from sr_robot_commander.sr_hand_commander import SrHandCommander
 from sr_utilities.hand_finder import HandFinder
 from typing import List, Dict
+import rospy
+from gazebo_msgs.msg import ContactsState
+from gazebo_msgs.msg import ContactState
 
+from shadow_hand.ShadowFinger import ShadowFinger
+from shadow_hand.ContactPoint import ContactPoint
 
 class ShadowHand:
-
-	HOME_POSITION = [0.0, 0.0, 0.0]
-
-	class ENUM_FINGERS():
-		def __init__(self, finger_names: list):
-			if not isinstance(finger_names, list):
-				ValueError("finger_names is not of type list[str]")
-				return
-
-			self.THUMB = finger_names[0]          # THUMB
-			self.INDEX_FINGER = finger_names[1]   # INDEX_FINGER
-			self.MIDDLE_FINGER = finger_names[2]  # MIDDLE_FINGER
-			self.RING_FINGER = finger_names[3]    # RING_FINGER
-			self.LITTLE_FINGER = finger_names[4]  # LITTLE_FINGER
+	"""A wrapper class for interacting with the Shadow Dexterous Hand"""
 
 	def __init__(self):
 		# waiting period for robot hand to start up...
@@ -52,18 +44,12 @@ class ShadowHand:
 		# get all the joint names in the hand with the hand prefix found above (e.g. 'rh_FFJ1', 'rh_FFJ2', 'rh_FFJ3', 'rh_FFJ4', 'rh_MFJ1', 'rh_MFJ2', ...)
 		self.__joints = self.__hand_finder.get_hand_joints()[self.__hand_chirality]
 
-		# joints=['rh_FFJ1', 'rh_FFJ2', 'rh_FFJ3', 'rh_FFJ4', 'rh_MFJ1', 'rh_MFJ2', 'rh_MFJ3', 'rh_MFJ4', 'rh_RFJ1', 'rh_RFJ2', 'rh_RFJ3', 'rh_RFJ4', 'rh_LFJ1', 'rh_LFJ2', 'rh_LFJ3', 'rh_LFJ4', 'rh_LFJ5', 'rh_THJ1', 'rh_THJ2', 'rh_THJ3', 'rh_THJ4', 'rh_THJ5', 'rh_WRJ1', 'rh_WRJ2', 'rh_FFJ1', 'rh_FFJ2', 'rh_FFJ3', 'rh_FFJ4', 'rh_MFJ1', 'rh_MFJ2', 'rh_MFJ3', 'rh_MFJ4', 'rh_RFJ1', 'rh_RFJ2', 'rh_RFJ3', 'rh_RFJ4', 'rh_LFJ1', 'rh_LFJ2', 'rh_LFJ3', 'rh_LFJ4', 'rh_LFJ5', 'rh_THJ1', 'rh_THJ2', 'rh_THJ3', 'rh_THJ4', 'rh_THJ5', 'rh_WRJ1', 'rh_WRJ2']
-
-		self.FINGERS = self.ENUM_FINGERS(finger_names=[
-			f"{self.__hand_chirality}_TH",
-			f"{self.__hand_chirality}_FF",
-			f"{self.__hand_chirality}_MF",
-			f"{self.__hand_chirality}_RF",
-			f"{self.__hand_chirality}_LF"
-		])
-
-		# subscribe and print the found contacts
-		# sub = rospy.Subscriber("/contacts/rh_ff/distal", ContactsState, callback=callback)
+		# define fingers
+		self.thumb_finger  = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.THUMB_FINGER,  hc=self.__hand_commander)
+		self.index_finger  = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.INDEX_FINGER,  hc=self.__hand_commander)
+		self.middle_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.MIDDLE_FINGER, hc=self.__hand_commander)
+		self.ring_finger   = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.RING_FINGER,   hc=self.__hand_commander)
+		self.little_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.LITTLE_FINGER, hc=self.__hand_commander)
 
 	def get_hand_chirality(self) -> str:
 		"""gets the hand's chirality (e.g. lh or rh)
@@ -73,6 +59,7 @@ class ShadowHand:
 		"""
 		return self.__hand_chirality
 
+
 	def get_joints(self):
 		"""get the joints of the shadow hand
 
@@ -81,26 +68,13 @@ class ShadowHand:
 		"""
 		return self.__joints
 
-	def set_finger(self, finger: ENUM_FINGERS, q: List[float]) -> bool:
-		"""sets the finger (FINGER) configuration to the one provided as q [tip_joint, middle_joint, base_joint]
-
-		Args:
-			FINGER (ENUM_FINGERS): One of the five fingers: THUMB, INDEX_FINGER, MIDDLE_FINGER, RING_FINGER or LITTLE_FINGER
-			q (list): a list of the joint values you want in radians
+	def get_fingers(self) -> List[ShadowFinger]:
+		"""gets the ShadowFingers for this ShadowHand
 
 		Returns:
-			bool: did the function successfully complete
+			List[ShadowFinger]: ShadowFingers
 		"""
-		joints = [f"{finger}J{j}" for j in range(1, 4)]
-		devprint(f"these are my joints {joints} in finger {finger}")
-		des_q = dict(zip(joints, q))
-		try:
-			devprint(f"attempting to set joint value {q}...")
-			self.__hand_commander.move_to_joint_value_target(des_q)
-			return True
-		except:
-			devprint(f"failed to set joint value {q}...")
-			return False
+		return [self.thumb_finger, self.index_finger, self.middle_finger, self.ring_finger, self.little_finger]
 
 	def get_q(self) -> Dict[str, float]:
 		"""returns the angle for each joint in radians
@@ -117,7 +91,7 @@ class ShadowHand:
 			Dict[str,int]: each joint and their angular velocity organized in a dictionary e.g. {'rh_FFJ1': 0.20, 'rh_FFJ2': 0.29, 'rh_FFJ3': 0.38, ...
 		"""
 		return self.__hand_commander.get_joints_velocity()
- 
+
 	def get_tau(self) -> Dict[str,float]:
 		"""returns the torque for each joint in Nm
 
@@ -125,11 +99,27 @@ class ShadowHand:
 			Dict[str,int]: each joint and their torque organized in a dictionary e.g. {'rh_FFJ1': 0.20, 'rh_FFJ2': 0.29, 'rh_FFJ3': 0.38, ...
 		"""
 		return self.__hand_commander.get_joints_effort()
- 
-	def get_tac_type(self) -> str: # TODO : fix
-		return self.__hand_commander.get_tactile_type()
 
-	def get_tac_pressure(self) -> Dict[str, float]:  # TODO : fix
-		return self.__hand_commander.get_tactile_state()
+	def get_contact_points(self) -> Dict[str,List[ContactPoint]]:
+		"""get a dictionary of all fingers' names and their contact points
 
-# how to get tactile information? gazebo pressure?
+		Returns:
+			Dict[str,List[ContactPoint]]: dictionary of all fingers' names and their contact points
+		"""
+		result = {
+			self.thumb_finger.get_name()  : self.thumb_finger.get_contact_points(),
+			self.index_finger.get_name()  : self.index_finger.get_contact_points(),
+			self.middle_finger.get_name() : self.middle_finger.get_contact_points(),
+			self.ring_finger.get_name()   : self.ring_finger.get_contact_points(),
+			self.little_finger.get_name() : self.little_finger.get_contact_points()
+		}
+		return result
+
+	def get_tac_type(self) -> str:
+		"""get the tactile type of the hand as used on every finger
+
+		Returns:
+			str: the tactile sensor type
+		"""
+		return self.index_finger.get_tac_type()
+

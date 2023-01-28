@@ -26,7 +26,7 @@
 	<!-- model path - props -->
 	<arg name="model_path" default="$(find sr_tactile_perception)/../models/"/>
 	<!-- load biotac simulated sensor plugin .......................................... -->
-	<arg name="bio_tac_sim" default="true"/>
+	<arg name="biotac_sim" default="true"/>
 
 	<!-- Shadow config -->
 
@@ -136,7 +136,7 @@
 	<!-- // Includes ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
 	<!-- LOADING ROBOT DESCRIPTION-->
-	<include file="$(find shadow_hand)/launch/load_robot_description.launch">
+	<include file="$(find shadow_hand)/robots/load_robot_description.launch">
 	<!-- <include file="$(find sr_robot_launch)/launch/load_robot_description.launch"> -->
 		<arg name="sim" default="true"/>
 		<arg name="side" default="$(arg side)"/>
@@ -153,8 +153,7 @@
 		<arg name="initial_z" value="$(arg initial_z)"/>
 		<arg name="initial_y" value="$(arg initial_y)"/>
 		<arg name="initial_yaw" value="$(arg initial_yaw)"/>
-		<!-- added line -->
-		<arg name="bio_tac_sim" value="$(arg bio_tac_sim)"/>
+		<arg name="biotac_sim" value="$(arg biotac_sim)"/>
 	</include>
 
 
