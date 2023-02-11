@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
+import rospkg
 import rospy
-from ros_utils_py.utils import devprint, keep_alive
+from ros_utils_py.utils import keep_alive
+from ros_utils_py.log import Logger
 import time
 from shadow_hand import ShadowHand
 import math
-from gazebo_msgs.msg import ContactsState
-from sr_robot_commander.sr_hand_commander import SrHandCommander
-from sr_utilities.hand_finder import HandFinder
 
 def main() -> None:
 
@@ -24,14 +23,18 @@ def main() -> None:
  
 	# set the index finger to q
 	sh.index_finger.set_q(q)
-	
+ 
+	# init logger and directory
+	log = Logger()
+ 
 	# print tactile information when available
 	while (True):
 		time.sleep(1)
 		if len(sh.index_finger.get_contact_points()) != 0:
-			devprint("\n" + sh.index_finger.get_contact_points()[0].contact_position.__str__())
+			log.info("THIS IS A LOGGING TEST")
+			log.info("contact point coordinates: \n" + sh.index_finger.get_contact_points()[0].contact_position.__str__())
 		else:
-			devprint("waiting for contacts...")
+			log.info("waiting for contacts...")
 
 if __name__ == '__main__':
 	try:
