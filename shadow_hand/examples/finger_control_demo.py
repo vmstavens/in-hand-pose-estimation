@@ -22,7 +22,9 @@ def main() -> None:
 	sh = ShadowHand()
  
 	# set the index finger to q
-	sh.index_finger.set_q(q)
+	# sh.index_finger.set_q(q)
+	
+	sh.set_fingers({})
  
 	# init logger and directory
 	log = Logger()
@@ -30,8 +32,8 @@ def main() -> None:
 	# print tactile information when available
 	while (True):
 		time.sleep(1)
-		if len(sh.index_finger.get_contact_points()) != 0:
-			log.info("THIS IS A LOGGING TEST")
+		
+		if sh.index_finger.is_in_contact():
 			log.info("contact point coordinates: \n" + sh.index_finger.get_contact_points()[0].contact_position.__str__())
 		else:
 			log.info("waiting for contacts...")

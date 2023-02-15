@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
 
-from ros_utils_py.utils import devprint
+from ros_utils_py.log import Logger
 import time
 from sr_robot_commander.sr_hand_commander import SrHandCommander
 from sr_utilities.hand_finder import HandFinder
-from typing import List, Dict
+from typing import List, Dict, Optional
 import rospy
 from gazebo_msgs.msg import ContactsState
 from gazebo_msgs.msg import ContactState
 
 from shadow_hand.ShadowFinger import ShadowFinger
-from shadow_hand.ContactPoint import ContactPoint
+from shadow_hand.ShadowWrist import ShadowWrist
 
 class ShadowHand:
 	"""A wrapper class for interacting with the Shadow Dexterous Hand"""
 
 	def __init__(self):
+     
+		# logger
+		self.__logger = Logger()
+     
 		# waiting period for robot hand to start up...
-		waiting_time: int = 5  # s
-		devprint(f"waiting {waiting_time} for hand to start...")
-		time.sleep(waiting_time)
+		__waiting_time: int = 5  # s
+		self.__logger.info(f"waiting {__waiting_time} for hand to start...")
+		time.sleep(__waiting_time)
 
 		# hand finder - gets data from the found hand(s)
 		self.__hand_finder: HandFinder = HandFinder()
@@ -51,75 +55,104 @@ class ShadowHand:
 		self.ring_finger   = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.RING_FINGER,   hc=self.__hand_commander)
 		self.little_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.LITTLE_FINGER, hc=self.__hand_commander)
 
-	def get_hand_chirality(self) -> str:
-		"""gets the hand's chirality (e.g. lh or rh)
+		# define wrist
+		self.__wrist = ShadowWrist(hc=self.__hand_commander,chirality=self.__hand_chirality)
 
-		Returns:
-			str: the hand's chirality
-		"""
+	@property
+	def hand_chirality(self) -> str:
+		"""gets the hand's chirality (e.g. lh or rh)"""
 		return self.__hand_chirality
 
-
-	def get_joints(self):
-		"""get the joints of the shadow hand
-
-		Returns:
-			list[str]: a list of joint names
-		"""
+	@property
+	def joints_names(self) -> List[str]:
+		"""get the joints of the shadow hand"""
 		return self.__joints
 
-	def get_fingers(self) -> List[ShadowFinger]:
-		"""gets the ShadowFingers for this ShadowHand
-
-		Returns:
-			List[ShadowFinger]: ShadowFingers
-		"""
+	@property
+	def fingers(self) -> List[ShadowFinger]:
+		"""gets the ShadowFingers for this ShadowHand"""
 		return [self.thumb_finger, self.index_finger, self.middle_finger, self.ring_finger, self.little_finger]
 
-	def get_q(self) -> Dict[str, float]:
-		"""returns the angle for each joint in radians
-
-		Returns:
-			Dict[str,int]: each joint and their angle organized in a dictionary e.g. {'rh_FFJ1': 0.20, 'rh_FFJ2': 0.29, 'rh_FFJ3': 0.38, ...
-		"""
+	@property
+	def q(self) -> Dict[str, float]:
+		"""returns the angle for each joint in the hand in radians e.g. {'rh_FFJ1': 0.20, 'rh_FFJ2': 0.29, 'rh_FFJ3': 0.38, ... """
 		return self.__hand_commander.get_joints_position()
 
-	def get_dq(self) -> Dict[str, float]:
-		"""returns the angular velocity for each joint in radians/s
-
-		Returns:
-			Dict[str,int]: each joint and their angular velocity organized in a dictionary e.g. {'rh_FFJ1': 0.20, 'rh_FFJ2': 0.29, 'rh_FFJ3': 0.38, ...
-		"""
+	@property
+	def dq(self) -> Dict[str, float]:
+		"""returns the angular velocity for each joint in radians/s e.g. {'rh_FFJ1': 0.20, 'rh_FFJ2': 0.29, 'rh_FFJ3': 0.38, ... """
 		return self.__hand_commander.get_joints_velocity()
 
-	def get_tau(self) -> Dict[str,float]:
-		"""returns the torque for each joint in Nm
-
-		Returns:
-			Dict[str,int]: each joint and their torque organized in a dictionary e.g. {'rh_FFJ1': 0.20, 'rh_FFJ2': 0.29, 'rh_FFJ3': 0.38, ...
-		"""
+	@property
+	def tau(self) -> Dict[str,float]:
+		"""returns the torque for each joint in Nm e.g. {'rh_FFJ1': 0.20, 'rh_FFJ2': 0.29, 'rh_FFJ3': 0.38, ... """
 		return self.__hand_commander.get_joints_effort()
 
-	def get_contact_points(self) -> Dict[str,List[ContactPoint]]:
-		"""get a dictionary of all fingers' names and their contact points
-
-		Returns:
-			Dict[str,List[ContactPoint]]: dictionary of all fingers' names and their contact points
-		"""
+	@property
+	def contact_states(self) -> Dict[str, Optional[ContactState]]:
+		"""get a dictionary of all fingers' names and their contact states"""
 		result = {
-			self.thumb_finger.get_name()  : self.thumb_finger.get_contact_points(),
-			self.index_finger.get_name()  : self.index_finger.get_contact_points(),
-			self.middle_finger.get_name() : self.middle_finger.get_contact_points(),
-			self.ring_finger.get_name()   : self.ring_finger.get_contact_points(),
-			self.little_finger.get_name() : self.little_finger.get_contact_points()
+			self.thumb_finger.name  : self.thumb_finger.contact_state,
+			self.index_finger.name  : self.index_finger.contact_state,
+			self.middle_finger.name : self.middle_finger.contact_state,
+			self.ring_finger.name   : self.ring_finger.contact_state,
+			self.little_finger.name : self.little_finger.contact_state
 		}
 		return result
 
-	def get_tac_type(self) -> str:
-		"""get the tactile type of the hand as used on every finger
+	@property
+	def tac_type(self) -> List[str]:
+		"""get a list of the tactile types of the hand as used on every finger in order: [thumb_finger, index_finger, middle_finger, ring_finger, little_finger]"""
+		return [f.tac_type for f in self.fingers]
 
+	@property
+	def wrist(self) -> ShadowWrist:
+		"""get the shadow hand's wrist object ShadowWrist"""
+		return self.__wrist
+
+	@property
+	def is_in_contact(self) -> bool:
+		return any(f.is_in_contact for f in self.fingers)
+
+	def set_q(self,des_state: Dict[ShadowFinger,List]) -> bool:
+		"""sets all joint configurations as specified in the dictionary. One such example can be seen below
+
+			hand_q = {
+				sh.thumb_finger  : [0.0, 0.0, π/2.0],
+				sh.index_finger  : [0.0, 0.0, π/2.0],
+				sh.middle_finger : [0.0, 0.0, π/2.0],
+				sh.ring_finger   : [0.0, 0.0, π/2.0],
+				sh.little_finger : [0.0, 0.0, π/2.0],
+				sh.wrist         : [0.0, 0.0]
+			}
+			if you want certain joints unchanged, simply leave a None
 		Returns:
-			str: the tactile sensor type
+			bool: if the setting succeeded
 		"""
-		return self.index_finger.get_tac_type()
+		# set the state given for all fingers, if one does not succeed, return false, else return true
+		for f in des_state.keys():
+			if not f.set_q( des_state[f] ):
+				return False
 
+		return True
+		# joints_states = {'rh_FFJ1': 90, 'rh_FFJ2': 90, 'rh_FFJ3': 90, 'rh_FFJ4': 0.0,
+	        #            'rh_MFJ1': 90, 'rh_MFJ2': 90, 'rh_MFJ3': 90, 'rh_MFJ4': 0.0,
+	        #            'rh_RFJ1': 90, 'rh_RFJ2': 90, 'rh_RFJ3': 90, 'rh_RFJ4': 0.0,
+	        #            'rh_LFJ1': 90, 'rh_LFJ2': 90, 'rh_LFJ3': 90, 'rh_LFJ4': 0.0, 'rh_LFJ5': 0.0,
+	        #            'rh_THJ1': 40, 'rh_THJ2': 35, 'rh_THJ3': 0.0, 'rh_THJ4': 65, 'rh_THJ5': 15,
+	        #            'rh_WRJ1': 0.0, 'rh_WRJ2': 0.0}
+
+		# for f in self.get_fingers():
+		# 	hand_dict[f.get_name()] = dict(zip(f.get_joint_names(), q_state[f.get_name()]))
+   
+		# self.__logger.info(hand_dict.__str__())
+
+		# # try and set the fingers q
+		# try:
+		# 	self.__logger.warn(rospy.get_name() + f" attempting to set joint value {q_state}...")
+		# 	self.__hand_commander.move_to_joint_value_target(hand_dict)
+		# 	self.__logger.success(rospy.get_name() + " succeeded...")
+		# 	return True
+		# except:
+		# 	rospy.logerr(f"failed to set joint value {q_state}...")
+		# 	return False

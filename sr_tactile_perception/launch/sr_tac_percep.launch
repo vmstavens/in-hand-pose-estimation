@@ -25,6 +25,8 @@
 	<arg unless="$(arg biotac)" name="tip_sensors" default="th=pst,ff=pst,mf=pst,rf=pst,lf=pst" />
 	<!-- start in home pose, since we are setting a new pose, this is false -->
 	<arg name="start_home" default="false" />
+	<!-- load the biotac_sim_lib plugin -->
+	<arg name="biotac_sim" default="true" />
 
 	<!-- // World specific arguments ///////////////////////////////////////////////////////////////////////// -->
 
@@ -53,7 +55,7 @@
 	<!-- // Load in simulation models ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- add shadow hand model -->
-	<include file="$(find shadow_hand)/launch/shadow_hand.launch">
+	<include file="$(find shadow_hand)/robots/shadow_hand.launch">
 		<arg name="gui" value="$(arg gui)"/>
 		<arg name="arm" value="false"/>
 		<arg name="hand" value="true"/>
@@ -63,6 +65,7 @@
 		<arg name="world_name" value="$(arg world_name)"/>
 		<arg name="tip_sensors" value="$(arg tip_sensors)"/>
 		<arg name="model_path" value="$(arg model_path)"/>
+		<arg name="biotac_sim" value="$(arg biotac_sim)" />
 	</include>
 
 </launch>
