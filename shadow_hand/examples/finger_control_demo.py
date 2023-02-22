@@ -22,9 +22,7 @@ def main() -> None:
 	sh = ShadowHand()
  
 	# set the index finger to q
-	# sh.index_finger.set_q(q)
-	
-	sh.set_fingers({})
+	sh.index_finger.set_q(q)
  
 	# init logger and directory
 	log = Logger()
@@ -33,8 +31,8 @@ def main() -> None:
 	while (True):
 		time.sleep(1)
 		
-		if sh.index_finger.is_in_contact():
-			log.info("contact point coordinates: \n" + sh.index_finger.get_contact_points()[0].contact_position.__str__())
+		if sh.index_finger.is_in_contact:
+			log.info("contact point coordinates:")
 		else:
 			log.info("waiting for contacts...")
 

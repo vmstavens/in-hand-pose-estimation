@@ -6,9 +6,10 @@ find_package(
 	catkin REQUIRED
 	COMPONENTS
 		rospy
-		ros_utils_py
+		geometry_msgs
 		shadow_hand
 		gazebo_msgs
+		ros_utils_py
 )
 
 # declare a catkin package
@@ -19,9 +20,10 @@ catkin_package(
 	# sr_test
 	CATKIN_DEPENDS
 		rospy
-		ros_utils_py
+		geometry_msgs
 		shadow_hand
 		gazebo_msgs
+		ros_utils_py
 	DEPENDS
 )
 

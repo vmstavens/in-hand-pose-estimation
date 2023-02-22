@@ -122,7 +122,6 @@
 
 	<!-- // ROS Parameters ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
-	<!-- !! experimental !!!!!!! -->
 	<param name="/hand/mapping/$(arg hand_serial)" value="$(arg hand_id)"/>
 	<param name="/hand/joint_prefix/$(arg hand_serial)" value="$(arg hand_id)_"/>
 

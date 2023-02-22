@@ -39,7 +39,15 @@
 	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- tactile perception node node -->
-	<node pkg="sr_tactile_perception" name="sr_tactile_perception" type="sr_tactile_perception.py" output="$(arg output)" />
+	<!-- <node pkg="sr_tactile_perception" name="sr_tactile_perception" type="sr_tactile_perception.py" output="$(arg output)" /> -->
+
+	<!-- Robot state publisher -->
+	<node pkg="sr_tactile_perception" type="sr_tactile_perception.py" name="sr_tactile_perception" output="$(arg output)">
+		<param name="biotac_sim" type="bool" value="$(arg biotac_sim)" />
+	</node>
+
+	<!-- live plotting node -->
+	<node pkg="ros_utils_py" name="live_plotter" type="live_plotter.py" output="$(arg output)" />
 
 	<!-- // Load in world ///////////////////////////////////////////////////////////////////////// -->
 
