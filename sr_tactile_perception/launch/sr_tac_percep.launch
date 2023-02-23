@@ -32,6 +32,7 @@
 
 	<!-- gravity is disabled in order to make probing simpler -->
 	<arg name="gravity" default="false" />
+	<!-- enable props -->
 	<arg name="props" default="true" />
 	<!-- <arg name="props" default="false" /> -->
 	<arg name="model_path" default="$(find sr_tactile_perception)/../models/" />
@@ -39,9 +40,6 @@
 	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- tactile perception node node -->
-	<!-- <node pkg="sr_tactile_perception" name="sr_tactile_perception" type="sr_tactile_perception.py" output="$(arg output)" /> -->
-
-	<!-- Robot state publisher -->
 	<node pkg="sr_tactile_perception" type="sr_tactile_perception.py" name="sr_tactile_perception" output="$(arg output)">
 		<param name="biotac_sim" type="bool" value="$(arg biotac_sim)" />
 	</node>
@@ -52,13 +50,9 @@
 	<!-- // Load in world ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- gravity and props -->
-	<arg if="$(eval     arg('gravity') and     arg('props'))" name="world_name" value="$(find sr_tactile_perception)/../worlds/sr_tac_percep_w_g_w_props.world" />
+	<arg if="$(arg gravity)" name="world_name" value="$(find sr_tactile_perception)/worlds/sr_tac_percep_w_g_w_props.world" />
 	<!-- not gravity and props -->
-	<arg if="$(eval not arg('gravity') and     arg('props'))" name="world_name" value="$(find sr_tactile_perception)/../worlds/sr_tac_percep_wo_g_w_props.world" />
-	<!-- gravity and not props -->
-	<arg if="$(eval     arg('gravity') and not arg('props'))" name="world_name" value="$(find sr_tactile_perception)/../worlds/sr_tac_percep_w_g_wo_props.world" />
-	<!-- not gravity and not props -->
-	<arg if="$(eval not arg('gravity') and not arg('props'))" name="world_name" value="$(find sr_tactile_perception)/../worlds/sr_tac_percep_wo_g_wo_props.world" />
+	<arg unless="$(arg gravity)" name="world_name" value="$(find sr_tactile_perception)/worlds/sr_tac_percep_wo_g_w_props.world" />
 
 	<!-- // Load in simulation models ///////////////////////////////////////////////////////////////////////// -->
 

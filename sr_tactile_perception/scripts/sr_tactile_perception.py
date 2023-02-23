@@ -21,16 +21,17 @@ def main() -> None:
 	pub = rospy.Publisher("live_plotter", PointCloud,queue_size=1)
  
 	# create shadow hand object
-	sh : ShadowHand = ShadowHand()
+	sh: ShadowHand = ShadowHand()
  
 	# joint configuration, from base to tip (does this make contact with the pen? yes)
-	test_q: list = [0.0, 0.0, math.pi / 2.0]
+	test_q: list = [0.0, math.pi / 4.0, math.pi / 2.0]
+	# test_q: list = [0.0, 0.0, math.pi / 2.0]
  
 	hand_q = {
 		sh.index_finger  : test_q,
-		# sh.middle_finger : test_q,
-		# sh.ring_finger   : test_q,
-		# sh.little_finger : test_q
+		sh.middle_finger : test_q,
+		sh.ring_finger   : test_q,
+		sh.pinky_finger  : test_q
 	}
  
 	# set the hand q
@@ -55,9 +56,9 @@ def main() -> None:
 			continue
 		
 		# while only some of the fingers are not in contact, wait...
-		# if not all(f.is_in_contact for f in sh.fingers):
-		# 	log.warn("One or more fingers have made contact, now we are waiting for the rest...")
-		# 	continue
+		if not all(f.is_in_contact for f in hand_q.keys()):
+			log.warn("One or more fingers have made contact, now we are waiting for the rest... the fingers making contact are")
+			continue
 
 		# now all fingers have made contact, wait for deformation to happen
 		rospy.sleep(2)
@@ -66,7 +67,7 @@ def main() -> None:
 		for f in sh.fingers:
 			json_data[f.name] = gazebo.point_cloud_to_dict(f.tactile_point_cloud)
 	
-		# write json_data to file
+		# # write json_data to file
 		json.dump(json_data, json_file, indent=4)
 
 		log.success("Successfully saved tactile data")
@@ -74,9 +75,8 @@ def main() -> None:
 		# live stream tactile data
 		while True:
 			kill_on_ctrl_c()
-			# log.warn("publishing to live_plotter for live tactile data...")
-			for f in sh.fingers:
-				pub.publish(f.tactile_point_cloud)
+			rospy.sleep(0.1)
+			pub.publish(sh.tactile_point_cloud)
 
 
 if __name__ == '__main__':

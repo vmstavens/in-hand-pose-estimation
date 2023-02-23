@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from sr_robot_commander.sr_hand_commander import SrHandCommander
 import rospy
 from gazebo_msgs.msg import ContactsState, ContactState
+from geometry_msgs.msg import Vector3
 import time
+
 from ros_utils_py.log import Logger
 from ros_utils_py.msg import PointCloud
+from ros_utils_py.gazebo import gazebo
+from ros_utils_py.utils import COLORS_RGBA
 
-from geometry_msgs.msg import Vector3
+from std_msgs.msg import ColorRGBA
 
 class ShadowFinger:
 	"""A wrapper class for interacting with the individual fingers of a Shadow Dexterous Hand"""
@@ -35,9 +39,21 @@ class ShadowFinger:
 		self.__name: str = f"{self.__chirality}_{self.__finger_type.upper()}"
 		self.__tactile_point_cloud: PointCloud = PointCloud()
 
-		# the label of each finger and how many joints they each have
-		self.__fingers_and_num_of_joints = {"FF": 4, "MF": 4, "RF": 4, "LF": 5, "TH": 5}
+		# look up table for colors depending on finger type
+		self.__fingers_and_color_codes: Dict[str, Tuple] = {
+			"TH": COLORS_RGBA.MAGENTA, 
+			"FF": COLORS_RGBA.BLUE   , 
+			"MF": COLORS_RGBA.GREEN  , 
+			"RF": COLORS_RGBA.YELLOW , 
+			"LF": COLORS_RGBA.RED    }
   
+		# set the finger color code
+		self.__color_code: Tuple = self.__fingers_and_color_codes[self.__finger_type.upper()]
+  
+		# the label of each finger and how many joints they each have
+		self.__fingers_and_num_of_joints = {"TH": 5, "FF": 4, "MF": 4, "RF": 4, "LF": 5}
+  
+		# set the number of joints in the finger
 		self.__num_of_joints = self.__fingers_and_num_of_joints[self.__finger_type.upper()]
 
 		# there are 4 joint, in range the last number is exclusive
@@ -52,6 +68,11 @@ class ShadowFinger:
 		"""finger's name"""
 		return self.__name
 
+	@property
+	def color_code(self) -> Tuple[float,float,float]:
+		"""the color associated with this finger in HLS format in a tuple"""
+		return self.__color_code
+  
 	@property
 	def joint_names(self) -> List[str]:
 		"""joint names"""
@@ -210,6 +231,10 @@ class ShadowFinger:
 			# if this finger is one of the ones in collision
 			if (self.__get_finger_type_in_collision_strings(cs.collision1_name, cs.collision2_name) == self.__finger_type):
 				self.contact_state = cs
+				break
+
+		# reconcile contact states such that all normals and other vectors are pointing in the correct direction
+		self.contact_state = self.__reconcile_contact_state(self.contact_state)
 
 		# build the tactile point cloud from displaced points of contact with the depth of the deformation along the normal vector
   
@@ -224,9 +249,14 @@ class ShadowFinger:
   
 		# displaced tactile point cloud, the values above (P, N and D) are just used to make the line below more readable...
 		self.__tactile_point_cloud.positions = [Vector3(p.x + (-N[i].x * D[i]), p.y + (-N[i].y * D[i]), p.z + (-N[i].z * D[i])) for i, p in enumerate(P)]
+  
+		# fill color array
+		self.__tactile_point_cloud.colors = [ColorRGBA(self.__color_code[0], self.__color_code[1], self.__color_code[2], 1.0) for i in P]
 
 		# pass along the remaining values from the contact state the data, to create the tactile point cloud
 		self.__tactile_point_cloud.normals = self.contact_state.contact_normals
+
+		# save if the tactile point cloud is empty
 		self.__tactile_point_cloud.empty   = (len(self.contact_state.contact_positions) == 0)
 
 	def __get_finger_type_in_collision_strings(self, collision1_name: str, collision2_name: str) -> str:
@@ -251,3 +281,30 @@ class ShadowFinger:
 		l_finger_collision_name = finger_collision_name.split("::")
 		finger_type = l_finger_collision_name[1].replace("distal", "").split("_")[1]
 		return finger_type
+
+	def __reconcile_contact_state(self, cs: ContactState) -> ContactState:
+		"""due to Gazebo sometimes mirroring contact directions in simulation such that normals point in the wrong direction, the contact states vote on which direction is correct"""
+
+		result: ContactState = cs
+
+		# loop over all contact normals
+		for i, n in enumerate(cs.contact_normals):
+
+			# make an array of True or False, depending on the dot product of n and n1, n2, n3 etc. If the dot product is positive the vectors are pointing in the same direction and the value True is added to the list
+			inlier_array: List[bool] = [True if gazebo.dot(n, ni) > 0 else False for ni in cs.contact_normals]
+   
+			# check if there are not Trues or Falses in the array
+			is_inlier = True if inlier_array.count(True) >= inlier_array.count(False) else False
+   
+			# if there are more Trues than Falses, then n in an inlier and we continue
+			if is_inlier:
+				continue
+			else:
+				# flip the normal n and all other vectors in the contact state
+				result.contact_normals[i]  = gazebo.prod(cs.contact_normals[i],  -1.0 )
+				result.wrenches[i].force   = gazebo.prod(cs.wrenches[i].force,   -1.0 )
+				result.wrenches[i].torque  = gazebo.prod(cs.wrenches[i].torque,  -1.0 )
+				result.total_wrench.force  = gazebo.prod(cs.total_wrench.force,  -1.0 )
+				result.total_wrench.torque = gazebo.prod(cs.total_wrench.torque, -1.0 )
+				
+		return result
