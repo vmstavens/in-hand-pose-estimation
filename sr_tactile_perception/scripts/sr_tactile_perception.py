@@ -41,12 +41,13 @@ def main() -> None:
 	data_dir = create_pkg_dir(__file__, "data/")
 
 	# open the file and clear its content
-	json_file = open(data_dir + date.today().strftime("%Y%m%d_%H%M%S") + ".json", "w")
+	json_file = open(data_dir + "stat_" + date.today().strftime("%Y%m%d_%H%M%S") + ".json", "w")
 	json_file.truncate(0)
  
 	# object to store contact data in
 	json_data = {}
 
+	# wait for the fingers to make contact
 	while True:
 		rospy.sleep(1)
   
@@ -60,24 +61,42 @@ def main() -> None:
 			log.warn("One or more fingers have made contact, now we are waiting for the rest... the fingers making contact are")
 			continue
 
-		# now all fingers have made contact, wait for deformation to happen
-		rospy.sleep(2)
+		break
+
+	# all fingers have made contact
+	# now all fingers have made contact, wait for deformation to happen
+	rospy.sleep(2)
+
+	DESIRED_NUMBER_OF_DATA_POINTS = 100
+
+	for f in hand_q.keys():
+		json_data[f.name] = {}
+		
+	while True:
 
 		# save the contact information in json_data
-		for f in sh.fingers:
-			json_data[f.name] = gazebo.point_cloud_to_dict(f.tactile_point_cloud)
-	
-		# # write json_data to file
-		json.dump(json_data, json_file, indent=4)
+		for f in hand_q.keys():
+			tac_pc_dict = gazebo.point_cloud_to_dict(f.tactile_point_cloud)
+			json_data[f.name]["normals_x"].extend( tac_pc_dict["normals_x"] )
+			json_data[f.name]["normals_y"].extend( tac_pc_dict["normals_y"] )
+			json_data[f.name]["normals_z"].extend( tac_pc_dict["normals_z"] )
 
-		log.success("Successfully saved tactile data")
-		
+		if all( [(len(json_data[f.name]["normals_x"]) >= DESIRED_NUMBER_OF_DATA_POINTS) for f in hand_q.keys()] ):
+			# write json_data to file
+			for f in hand_q.keys():
+				json_data[f.name]["normals_x"] = json_data[f.name]["normals_x"][:100]
+				json_data[f.name]["normals_y"] = json_data[f.name]["normals_y"][:100]
+				json_data[f.name]["normals_z"] = json_data[f.name]["normals_z"][:100]
+			json.dump(json_data, json_file, indent=4)
+			break
+
 		# live stream tactile data
-		while True:
-			kill_on_ctrl_c()
-			rospy.sleep(0.1)
-			pub.publish(sh.tactile_point_cloud)
+		# while True:
+		# 	kill_on_ctrl_c()
+		# 	rospy.sleep(0.1)
+		# 	pub.publish(sh.tactile_point_cloud)
 
+	log.success("Successfully saved tactile data")
 
 if __name__ == '__main__':
 	try:
