@@ -8,11 +8,11 @@ from geometry_msgs.msg import Vector3
 import time
 
 from ros_utils_py.log import Logger
-from ros_utils_py.msg import PointCloud
+from ros_utils_py.msg import PointCloud, Color
 from ros_utils_py.gazebo import gazebo
-from ros_utils_py.utils import COLORS_RGBA
+from ros_utils_py.utils import COLORS_RGBA, COLOR
 
-from std_msgs.msg import ColorRGBA
+import numpy as np
 
 class ShadowFinger:
 	"""A wrapper class for interacting with the individual fingers of a Shadow Dexterous Hand"""
@@ -40,7 +40,7 @@ class ShadowFinger:
 		self.__tactile_point_cloud: PointCloud = PointCloud()
 
 		# look up table for colors depending on finger type
-		self.__fingers_and_color_codes: Dict[str, Tuple] = {
+		self.__fingers_and_colors: Dict[str, COLOR] = {
 			"TH": COLORS_RGBA.MAGENTA, 
 			"FF": COLORS_RGBA.BLUE   , 
 			"MF": COLORS_RGBA.GREEN  , 
@@ -48,7 +48,7 @@ class ShadowFinger:
 			"LF": COLORS_RGBA.RED    }
   
 		# set the finger color code
-		self.__color_code: Tuple = self.__fingers_and_color_codes[self.__finger_type.upper()]
+		self.__finger_color: COLOR = self.__fingers_and_colors[self.__finger_type.upper()]
   
 		# the label of each finger and how many joints they each have
 		self.__fingers_and_num_of_joints = {"TH": 5, "FF": 4, "MF": 4, "RF": 4, "LF": 5}
@@ -69,9 +69,9 @@ class ShadowFinger:
 		return self.__name
 
 	@property
-	def color_code(self) -> Tuple[float,float,float]:
+	def finger_color(self) -> COLOR:
 		"""the color associated with this finger in HLS format in a tuple"""
-		return self.__color_code
+		return self.__finger_color
   
 	@property
 	def joint_names(self) -> List[str]:
@@ -249,9 +249,9 @@ class ShadowFinger:
   
 		# displaced tactile point cloud, the values above (P, N and D) are just used to make the line below more readable...
 		self.__tactile_point_cloud.positions = [Vector3(p.x + (-N[i].x * D[i]), p.y + (-N[i].y * D[i]), p.z + (-N[i].z * D[i])) for i, p in enumerate(P)]
-  
+
 		# fill color array
-		self.__tactile_point_cloud.colors = [ColorRGBA(self.__color_code[0], self.__color_code[1], self.__color_code[2], 1.0) for i in P]
+		self.__tactile_point_cloud.colors = [ Color(self.finger_color.label, self.finger_color.color_code) for i in P]
 
 		# pass along the remaining values from the contact state the data, to create the tactile point cloud
 		self.__tactile_point_cloud.normals = self.contact_state.contact_normals

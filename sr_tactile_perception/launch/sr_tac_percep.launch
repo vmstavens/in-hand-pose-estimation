@@ -6,8 +6,8 @@
 	<!-- if the simulation should start paused -->
 	<arg name="paused" default="false" />
 	<!-- if gazebo should be launched to show the robot hand -->
-	<arg name="gui" default="true" />
-	<!-- <arg name="gui" default="false" /> -->
+	<!-- <arg name="gui" default="true" /> -->
+	<arg name="gui" default="false" />
 	<!-- be able to print with info -->
 	<arg name="output" default="screen" />
 	

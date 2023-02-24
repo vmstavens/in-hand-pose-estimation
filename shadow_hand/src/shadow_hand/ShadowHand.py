@@ -138,7 +138,7 @@ class ShadowHand:
 			self.__index_finger  : self.__index_finger.contact_state,
 			self.__middle_finger : self.__middle_finger.contact_state,
 			self.__ring_finger   : self.__ring_finger.contact_state,
-			self.__pinky_finger : self.__pinky_finger.contact_state
+			self.__pinky_finger  : self.__pinky_finger.contact_state
 		}
 
 	@property

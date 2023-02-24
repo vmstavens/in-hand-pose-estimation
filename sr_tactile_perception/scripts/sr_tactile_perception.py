@@ -24,8 +24,8 @@ def main() -> None:
 	sh: ShadowHand = ShadowHand()
  
 	# joint configuration, from base to tip (does this make contact with the pen? yes)
-	test_q: list = [0.0, math.pi / 4.0, math.pi / 2.0]
-	# test_q: list = [0.0, 0.0, math.pi / 2.0]
+	# test_q: list = [0.0, math.pi / 4.0, math.pi / 2.0]
+	test_q: list = [math.pi / 8.0, 0.0, math.pi / 2.0]
  
 	hand_q = {
 		sh.index_finger  : test_q,
