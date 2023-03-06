@@ -4,7 +4,7 @@ from ros_utils_py.log import Logger
 import time
 from sr_robot_commander.sr_hand_commander import SrHandCommander
 from sr_utilities.hand_finder import HandFinder
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 import rospy
 from gazebo_msgs.msg import ContactState
 
@@ -22,13 +22,6 @@ class ShadowHand:
 		# logger
 		self.__log = Logger()
 
-		# has the biotac flag been set in launch file
-		self.__is_biotac_sim_live: bool = rospy.get_param('~biotac_sim')
-		if self.__is_biotac_sim_live: 
-			self.__log.success("biotac_sim is live and ready for use...") 
-		else:
-			self.__log.warn("biotac_sim is NOT live...")
-
 		# wait for rviz-/move_group node to be initiated such that the hand can be communicated with
 		timeout = 10
 		t = 0
@@ -38,6 +31,15 @@ class ShadowHand:
 			t += 1
 			if t >= timeout:
 				self.__log.error("Failed to find /move_group and could therefore not connect to Shadow Dexterous Hand...")
+
+		# has the biotac flag been set in launch file
+		self.__is_biotac_sim_live = rospy.get_param('/biotac_sim')
+
+		if self.__is_biotac_sim_live:
+			self.__log.success("biotac_sim is live and ready for use...") 
+		else:
+			self.__log.warn("biotac_sim is NOT live...")
+
 
 		self.__log.success("Successfully connected to Shadow Dexterous Hand...")
 
@@ -166,7 +168,7 @@ class ShadowHand:
 		"""a point cloud made from the tactile data from all fingers"""
 		return gazebo.combine_point_clouds(*[f.tactile_point_cloud for f in self.fingers])
 		
-	def set_q(self,des_state: Dict[ShadowFinger,List[Optional[float]]]) -> bool:
+	def set_q(self,des_state: Dict[Union[ShadowFinger,ShadowWrist],List[Optional[float]]]) -> bool:
 		"""sets all joint configurations as specified in the dictionary. One such example can be seen below
 
 			hand_q = {
@@ -198,11 +200,13 @@ class ShadowHand:
 			self.__log.success(rospy.get_name() + " succeeded...")
 			return True
 		except:
-			self.__log.error(f"failed to set joint value {valid_des_state}... --> I'm in the hand")
+			self.__log.error(f"failed to set joint value {valid_des_state}...")
 			return False
+
 			# joints_states = {'rh_FFJ1': 90, 'rh_FFJ2': 90, 'rh_FFJ3': 90, 'rh_FFJ4': 0.0,
 			#            'rh_MFJ1': 90, 'rh_MFJ2': 90, 'rh_MFJ3': 90, 'rh_MFJ4': 0.0,
 			#            'rh_RFJ1': 90, 'rh_RFJ2': 90, 'rh_RFJ3': 90, 'rh_RFJ4': 0.0,
 			#            'rh_LFJ1': 90, 'rh_LFJ2': 90, 'rh_LFJ3': 90, 'rh_LFJ4': 0.0, 'rh_LFJ5': 0.0,
 			#            'rh_THJ1': 40, 'rh_THJ2': 35, 'rh_THJ3': 0.0, 'rh_THJ4': 65, 'rh_THJ5': 15,
 			#            'rh_WRJ1': 0.0, 'rh_WRJ2': 0.0}
+			# 'rh_THJ1', 'rh_THJ2', 'rh_THJ3', 'rh_THJ4', 'rh_THJ5'

@@ -5,8 +5,8 @@
 	<version>1.0.0</version>
 	<description>Metapackage for in-hand pose estimation for the Shadow Dextereous hand</description>
 
-	<author email="vista17@student.sdu.dk">Victor Staven</author>
-	<maintainer email="vista17@student.sdu.dk">Victor Staven</maintainer>
+	<author email="victorstaven@gmail.com">Victor Staven</author>
+	<maintainer email="victorstaven@gmail.com">Victor Staven</maintainer>
 
 	<license>BSD</license>
 
@@ -14,8 +14,10 @@
 
 	<buildtool_depend>catkin</buildtool_depend>
 
-	<exec_depend>shadow_hand</exec_depend>
+	<exec_depend>
+		shadow_hand</exec_depend>
 	<exec_depend>sr_tactile_perception</exec_depend>
+	<exec_depend>biotac_sim_plugin</exec_depend>
 
 	<export>
 		<metapackage />

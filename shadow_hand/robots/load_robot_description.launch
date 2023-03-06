@@ -16,7 +16,7 @@
 	<arg name="prox_sensors" />
 	<arg name="palm_sensor" />
 
-	<!-- load biotac simulated sensor plugin .......................................... -->
+	<!-- load biotac simulated sensor plugin -->
 	<arg name="biotac_sim" default="true" />
 
 	<!-- robot_descriptions -->

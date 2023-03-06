@@ -9,7 +9,7 @@ import time
 
 from ros_utils_py.log import Logger
 from ros_utils_py.msg import PointCloud, Color
-from ros_utils_py.gazebo import gazebo
+from ros_utils_py.geometry import geometry
 from ros_utils_py.utils import COLORS_RGBA, COLOR
 
 import numpy as np
@@ -70,7 +70,7 @@ class ShadowFinger:
 
 	@property
 	def finger_color(self) -> COLOR:
-		"""the color associated with this finger in HLS format in a tuple"""
+		"""the color associated with this finger in RGB format in a tuple"""
 		return self.__finger_color
   
 	@property
@@ -291,7 +291,7 @@ class ShadowFinger:
 		for i, n in enumerate(cs.contact_normals):
 
 			# make an array of True or False, depending on the dot product of n and n1, n2, n3 etc. If the dot product is positive the vectors are pointing in the same direction and the value True is added to the list
-			inlier_array: List[bool] = [True if gazebo.dot(n, ni) > 0 else False for ni in cs.contact_normals]
+			inlier_array: List[bool] = [True if geometry.dot(n, ni) > 0 else False for ni in cs.contact_normals]
    
 			# check if there are not Trues or Falses in the array
 			is_inlier = True if inlier_array.count(True) >= inlier_array.count(False) else False
@@ -301,10 +301,10 @@ class ShadowFinger:
 				continue
 			else:
 				# flip the normal n and all other vectors in the contact state
-				result.contact_normals[i]  = gazebo.prod(cs.contact_normals[i],  -1.0 )
-				result.wrenches[i].force   = gazebo.prod(cs.wrenches[i].force,   -1.0 )
-				result.wrenches[i].torque  = gazebo.prod(cs.wrenches[i].torque,  -1.0 )
-				result.total_wrench.force  = gazebo.prod(cs.total_wrench.force,  -1.0 )
-				result.total_wrench.torque = gazebo.prod(cs.total_wrench.torque, -1.0 )
+				result.contact_normals[i]  = geometry.prod(cs.contact_normals[i],  -1.0 )
+				result.wrenches[i].force   = geometry.prod(cs.wrenches[i].force,   -1.0 )
+				result.wrenches[i].torque  = geometry.prod(cs.wrenches[i].torque,  -1.0 )
+				result.total_wrench.force  = geometry.prod(cs.total_wrench.force,  -1.0 )
+				result.total_wrench.torque = geometry.prod(cs.total_wrench.torque, -1.0 )
 				
 		return result

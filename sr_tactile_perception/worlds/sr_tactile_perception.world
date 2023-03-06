@@ -10,7 +10,7 @@
     <!-- box as a test object for in hand pose estimation -->
     <model name="box">
       <static>true</static>
-      <pose> 0.131313 -0.285373 1.0 0 0 0</pose>
+      <pose> 0.131313 -0.285373 1.0 0 0 0 </pose>
       <link name="body">
         <collision name="collision1">
           <geometry>
@@ -30,8 +30,7 @@
     </model>
 
     <light type="directional" name="light">
-      <pose frame=''>0
-        -4 2.5 1.0 0 0</pose>
+      <pose frame=''>0 -4 2.5 1.0 0 0</pose>
       <diffuse>1.0 1.0 1.0 1</diffuse>
       <specular>0.2 0.2 0.2 1</specular>
       <attenuation>
@@ -46,9 +45,8 @@
     </light>
 
     <physics type="ode">
-      <!-- disable gravity -->
-      <gravity>0.000000
-        0.000000 -9.810000</gravity>
+      <!-- gravity -->
+      <gravity>0.000000 0.000000 -0.00000001</gravity>
       <ode>
         <solver>
           <type>quick</type>

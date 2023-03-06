@@ -32,7 +32,7 @@ def main() -> None:
 		time.sleep(1)
 		
 		if sh.index_finger.is_in_contact:
-			log.info("contact point coordinates:")
+			log.info(f"contact point coordinates: {sh.index_finger.contact_state}")
 		else:
 			log.info("waiting for contacts...")
 
