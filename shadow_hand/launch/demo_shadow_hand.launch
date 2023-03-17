@@ -1,0 +1,74 @@
+<launch>
+
+	<!-- // Boiler plate arguments ///////////////////////////////////////////////////////////////////////// -->
+
+	<!-- if the simulation should start paused -->
+	<arg name="paused" default="false" />
+	<!-- if gazebo should be launched to show the robot hand -->
+	<arg name="gui" default="true" />
+	<!-- be able to print with info -->
+	<arg name="output" default="screen" />
+
+	<!-- // Shadow specific arguments ///////////////////////////////////////////////////////////////////////// -->
+
+	<!-- use hand in simulation -->
+	<arg name="hand" default="true" />
+	<!-- biotac -->
+	<arg name="biotac" default="true" />
+	<arg if="$(arg biotac)" name="tip_sensors" value="bt_sp" />
+	<arg unless="$(arg biotac)" name="tip_sensors" default="th=pst,ff=pst,mf=pst,rf=pst,lf=pst" />
+	<!-- start in home pose, since we are setting a new pose, this is false -->
+	<arg name="start_home" default="false" />
+	<!-- load the biotac_sim_lib plugin -->
+	<arg name="biotac_sim" default="true" />
+	<!-- position of the hand's spawn point. Orientation of the hand's spawn point, measured radians in WORLD Roll-Pitch-Yaw (1.57 = pi/2 = 90 deg) -->
+	<arg name="hand_pose" default="-x 0.0 -y 0.0 -z 1.0 -R 1.57 -P -1.57 -Y 0.0" />
+
+	<!-- // World specific arguments ///////////////////////////////////////////////////////////////////////// -->
+
+	<!-- model path and model to spawn -->
+	<arg name="model_path" default="$(find shadow_hand)/../models/" />
+	<!-- which model you wisht to touch (cube, sphere or pen_black) -->
+	<arg name="prop" default="cube" />
+	<!-- the pose of the  -->
+	<arg name="prop_pose" default="-x 0.134796 -y -0.281485 -z 0.991616 -R 0.0 -P 0.0 -Y 0.0" />
+	<!-- spawn the prop -->
+	<node name="spawn_prop" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-file $(arg model_path)$(arg prop)/model_static.sdf -sdf $(arg prop_pose) -model $(arg prop)" />
+
+	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
+
+	<!-- finger_control_demo node -->
+	<node pkg="shadow_hand" name="finger_control_demo" type="finger_control_demo.py" output="$(arg output)" />
+
+	<!-- // Environment variables ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+	<!-- gazebo model path, where to find models -->
+	<env name="GAZEBO_PLUGIN_PATH"        value="$GAZEBO_PLUGIN_PATH:/home/user/projects/shadow_robot/base/devel/lib/" />
+	<env name="GAZEBO_MODEL_PATH"         value="$GAZEBO_MODEL_PATH:$(arg model_path):$(find sr_description_common)/models/" />
+	<env name="GAZEBO_MODEL_DATABASE_URI" value="" />
+	<env name="MESH_WORKSPACE_PATH"       value="$MESH_WORKSPACE_PATH:$(arg model_path):$(find sr_description_common)/models/" />
+
+	<!-- // Load in simulation models ///////////////////////////////////////////////////////////////////////// -->
+
+	<!-- add shadow hand model -->
+	<include file="$(find shadow_hand)/robots/shadow_hand.launch">
+		<arg name="gui" value="$(arg gui)" />
+		<arg name="arm" value="false" />
+		<arg name="hand" value="true" />
+		<arg name="start_home" value="$(arg start_home)" />
+		<arg name="tip_sensors" value="$(arg tip_sensors)" />
+		<arg name="biotac_sim" value="$(arg biotac_sim)" />
+		<arg name="hand_pose" value="$(arg hand_pose)" />
+	</include>
+
+	<!-- // Load in world ///////////////////////////////////////////////////////////////////////// -->
+
+	<arg name="world_name" value="$(find shadow_hand)/../worlds/in_hand_pose_estimation.world" />
+
+	<include file="$(find gazebo_ros)/launch/empty_world.launch">
+		<arg name="world_name" value="$(arg world_name)" />
+		<arg name="gui" value="$(arg gui)" />
+		<arg name="paused" value="$(arg paused)" />
+	</include>
+
+</launch>

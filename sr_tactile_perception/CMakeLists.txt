@@ -33,6 +33,7 @@ catkin_python_setup()
 ## install python nodes
 catkin_install_python(
   PROGRAMS 
-    scripts/sr_tactile_perception.py
+    src/sr_tactile_perception.py
+    src/test.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

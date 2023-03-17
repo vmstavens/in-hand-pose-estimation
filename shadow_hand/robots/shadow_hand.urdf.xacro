@@ -39,8 +39,14 @@
 		prox_sensors="$(arg prox_sensors)" palm_sensor="$(arg palm_sensor)"
 		mounting_plate="$(arg mounting_plate)" />
 
-	<gazebo>
 		<!-- <plugin filename="libbiotac_sim_lib.so" name="biotac_sim_lib"> This works for some reason?! -->
+	<!-- <gazebo>
+		<plugin filename="libbiotac_sim_lib.so" name="biotac_sim_lib">
+			<alwaysOn>true</alwaysOn>
+			<updateRate>100.0</updateRate>
+		</plugin>
+	</gazebo> -->
+	<gazebo>
 			<plugin filename="libsim_biotac.so" name="sim_biotac">
 			<alwaysOn>true</alwaysOn>
 			<updateRate>100.0</updateRate>

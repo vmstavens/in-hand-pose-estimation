@@ -23,7 +23,7 @@ class ShadowFinger:
 		INDEX_FINGER  = "ff"
 		MIDDLE_FINGER = "mf"
 		RING_FINGER   = "rf"
-		PINKY_FINGER  = "lf"
+		LITTLE_FINGER  = "lf"
 
 	def __init__(self, finger_type: str, hc: SrHandCommander, update_freq: float = 2.0, chirality: str = "rh"):
 		

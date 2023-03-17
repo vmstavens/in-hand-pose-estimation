@@ -70,7 +70,7 @@ class ShadowHand:
 		self.__index_finger  = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.INDEX_FINGER,  hc=self.__hand_commander)
 		self.__middle_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.MIDDLE_FINGER, hc=self.__hand_commander)
 		self.__ring_finger   = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.RING_FINGER,   hc=self.__hand_commander)
-		self.__pinky_finger  = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.PINKY_FINGER,  hc=self.__hand_commander)
+		self.__little_finger  = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.LITTLE_FINGER,  hc=self.__hand_commander)
 
 		# define wrist
 		self.__wrist = ShadowWrist(hc=self.__hand_commander,chirality=self.__hand_chirality)
@@ -98,9 +98,9 @@ class ShadowHand:
 		return self.__ring_finger
 
 	@property
-	def pinky_finger(self) -> ShadowFinger:
-		"""gets the hand's pinky finger as a ShadowFinger"""
-		return self.__pinky_finger
+	def little_finger(self) -> ShadowFinger:
+		"""gets the hand's little finger as a ShadowFinger"""
+		return self.__little_finger
 
 	@property
 	def hand_chirality(self) -> str:
@@ -115,7 +115,7 @@ class ShadowHand:
 	@property
 	def fingers(self) -> List[ShadowFinger]:
 		"""gets the ShadowFingers for this ShadowHand"""
-		return [self.__thumb_finger, self.__index_finger, self.__middle_finger, self.__ring_finger, self.__pinky_finger]
+		return [self.__thumb_finger, self.__index_finger, self.__middle_finger, self.__ring_finger, self.__little_finger]
 
 	@property
 	def q(self) -> Dict[str, float]:
@@ -140,12 +140,12 @@ class ShadowHand:
 			self.__index_finger  : self.__index_finger.contact_state,
 			self.__middle_finger : self.__middle_finger.contact_state,
 			self.__ring_finger   : self.__ring_finger.contact_state,
-			self.__pinky_finger  : self.__pinky_finger.contact_state
+			self.__little_finger  : self.__little_finger.contact_state
 		}
 
 	@property
 	def tac_type(self) -> List[str]:
-		"""get a list of the tactile types of the hand as used on every finger in order: [thumb_finger, index_finger, middle_finger, ring_finger, pinky_finger]"""
+		"""get a list of the tactile types of the hand as used on every finger in order: [thumb_finger, index_finger, middle_finger, ring_finger, little_finger]"""
 		return [f.tac_type for f in self.fingers]
 
 	@property
@@ -176,7 +176,7 @@ class ShadowHand:
 				sh.index_finger  : [0.0, 0.0, π/2.0],
 				sh.middle_finger : [0.0, 0.0, π/2.0],
 				sh.ring_finger   : [0.0, 0.0, π/2.0],
-				sh.pinky_finger  : [0.0, 0.0, π/2.0],
+				sh.little_finger  : [0.0, 0.0, π/2.0],
 				sh.wrist         : [0.0, 0.0]
 			}
 			if you want certain joints unchanged, simply leave a None

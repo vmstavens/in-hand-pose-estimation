@@ -7,7 +7,6 @@
 	<arg name="paused" default="false" />
 	<!-- if gazebo should be launched to show the robot hand -->
 	<arg name="gui" default="true" />
-	<!-- <arg name="gui" default="false" /> -->
 	<!-- be able to print with info -->
 	<arg name="output" default="screen" />
 	<!-- verbose -->
@@ -30,14 +29,17 @@
 
 	<!-- // World specific arguments ///////////////////////////////////////////////////////////////////////// -->
 
-	<!-- model path and model to spawn -->
-	<arg name="model_path" default="$(find shadow_hand)/../models/" />
 	<!-- which model you wisht to touch (cube, sphere or pen_black) -->
-	<arg name="prop" default="cube" />
-	<!-- the pose of the  -->
-	<arg name="prop_pose" default="-x 0.134796 -y -0.281485 -z 0.991616 -R 0.0 -P 0.0 -Y 0.0" />
-	<!-- spawn the prop -->
-	<node name="spawn_prop" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-file $(arg model_path)$(arg prop)/model.sdf -sdf $(arg prop_pose) -model $(arg prop)" />
+	<arg name="prop_name" default="cube" />
+
+	<!-- the mechanics of the prop loaded, should it be "static" or "dynamic" -->
+	<arg name="prop_mechanics" default="static" />
+	<param name="prop_mechanics" type="string" value="$(arg prop_mechanics)" />
+
+	<include file="$(find sr_tactile_perception)/launch/sr_load_prop.launch">
+		<arg name="prop_name" value="$(arg prop_name)"/>
+		<arg name="prop_mechanics" value="$(arg prop_mechanics)"/>
+	</include>
 
 	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
 
@@ -47,16 +49,22 @@
 	<!-- tactile perception node node -->
 	<node pkg="sr_tactile_perception" type="sr_tactile_perception.py" name="sr_tactile_perception" output="$(arg output)"/>
 
+	<!-- test node -->
+	<!-- <param name="prop_mechanics_param" type="string" value="$(arg prop_mechanics)" /> -->
+	<!-- <node pkg="sr_tactile_perception" type="test.py" name="test" output="$(arg output)" >
+		<param name="test" value="this_is_a_testing_string" type="string" />
+	</node> -->
+
 	<!-- live plotting node -->
 	<!-- <node pkg="ros_utils_py" name="live_plotter" type="live_plotter.py" output="$(arg output)" /> -->
 
 	<!-- // Environment variables///////////////////////////////////////////////////////////////// -->
 
 	<!-- gazebo model path, where to find models -->
-	<env name="GAZEBO_PLUGIN_PATH" value="$GAZEBO_PLUGIN_PATH:/home/user/projects/shadow_robot/base/devel/lib/" />
+	<!-- <env name="GAZEBO_PLUGIN_PATH" value="$GAZEBO_PLUGIN_PATH:/home/user/projects/shadow_robot/base/devel/lib/" />
 	<env name="GAZEBO_MODEL_PATH" value="$GAZEBO_MODEL_PATH:$(arg model_path):$(find sr_description_common)/models/" />
-	<env name="GAZEBO_MODEL_DATABASE_URI" value="https://github.com/osrf/gazebo_models" />
-	<env name="MESH_WORKSPACE_PATH" value="$MESH_WORKSPACE_PATH:$(arg model_path):$(find sr_description_common)/models/" />
+	<env name="GAZEBO_MODEL_DATABASE_URI" value="" />
+	<env name="MESH_WORKSPACE_PATH" value="$MESH_WORKSPACE_PATH:$(arg model_path):$(find sr_description_common)/models/" /> -->
 
 	<!-- // Load in simulation models ///////////////////////////////////////////////////////////////////////// -->
 
