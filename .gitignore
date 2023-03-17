@@ -1,4 +1,5 @@
 *.json
+*.jpg
 devel/
 logs/
 build/
