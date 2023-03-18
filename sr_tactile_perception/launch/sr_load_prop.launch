@@ -25,9 +25,9 @@
 	<arg name="prop_pose" value="-x 0.098090 -y -0.292110 -z 0.991616 -R 0.0 -P 0.0 -Y -0.784999"
 		if="$(eval prop_name == 'sphere')" />
 
-	<!-- pen_black -->
-	<!-- <arg name="prop_pose" value="-x 0.098090 -y -0.292110 -z 0.991616 -R 0.0 -P 0.0 -Y -0.784999"
-		if="$(eval prop_name == 'sphere')" /> -->
+	<!-- stanford_bunny -->
+	<arg name="prop_pose" value="-x 0.104489 -y -0.281149 -z 0.980025 -R 0.0 -P 0.0 -Y -0.0"
+		if="$(eval prop_name == 'stanford_bunny')" />
 
 	<!-- push prop to parameter server -->
 	<param name="prop_name" type="string" value="$(arg prop_name)" />

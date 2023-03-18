@@ -3,7 +3,7 @@
 from utils import Vector3
 from math import sqrt
 
-FILE_PATHS_DATA = ["../data/stat_202337_10553.json", "../data/stat_202337_10315.json", "../data/stat_202337_105044.json"]
+FILE_PATHS_DATA = ["../data/stat_2023317_19544.json", "../data/stat_2023317_19952.json", "../data/stat_2023317_191745.json"]
 # FILE_PATHS_DATA = ["data/stat_202337_10553.json", "data/stat_202337_10315.json", "data/stat_202337_105044.json"]
 
 AXIS_LIMITS = {
@@ -43,7 +43,7 @@ MARKER_SIZE = 10
 NUMBER_OF_PLOTS = 9
 
 FLAT_REF_VEC = Vector3(0.0, 1.0, 0.0)
-EDGE_REF_VEC = (Vector3(1.0/sqrt(2), -1.0/sqrt(2), 0.0), Vector3(-1.0/sqrt(2), -1.0/sqrt(2), 0.0))
+EDGE_REF_VEC = (Vector3(1.0/sqrt(2), -1.0/sqrt(2), 0.0), Vector3(-1.0/sqrt(2), -1.0/sqrt(2), 0.0), Vector3(0.0, 1.0, 0.0))
 SPHERE_REF_VEC = Vector3(0.0, 1.0, 0.0)
 SPHERE_CENTER = Vector3(0.098090, -0.292110, 0.991616)
 

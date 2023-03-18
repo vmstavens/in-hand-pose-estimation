@@ -40,7 +40,6 @@ class ShadowHand:
 		else:
 			self.__log.warn("biotac_sim is NOT live...")
 
-
 		self.__log.success("Successfully connected to Shadow Dexterous Hand...")
 
 		# hand finder - gets data from the found hand(s)
@@ -66,11 +65,11 @@ class ShadowHand:
 		self.__joints = self.__hand_finder.get_hand_joints()[self.__hand_chirality]
 
 		# define fingers
-		self.__thumb_finger  = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.THUMB_FINGER,  hc=self.__hand_commander)
-		self.__index_finger  = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.INDEX_FINGER,  hc=self.__hand_commander)
+		self.__thumb_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.THUMB_FINGER, hc=self.__hand_commander)
+		self.__index_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.INDEX_FINGER, hc=self.__hand_commander)
 		self.__middle_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.MIDDLE_FINGER, hc=self.__hand_commander)
-		self.__ring_finger   = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.RING_FINGER,   hc=self.__hand_commander)
-		self.__little_finger  = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.LITTLE_FINGER,  hc=self.__hand_commander)
+		self.__ring_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.RING_FINGER, hc=self.__hand_commander)
+		self.__little_finger  = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.LITTLE_FINGER, hc=self.__hand_commander)
 
 		# define wrist
 		self.__wrist = ShadowWrist(hc=self.__hand_commander,chirality=self.__hand_chirality)

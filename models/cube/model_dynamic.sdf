@@ -1,6 +1,7 @@
 <!-- cube as a test object for in hand pose estimation -->
 <sdf version="1.6">
 	<model name="cube">
+		<static>false</static>
 		<link name="base_link">
 			<collision name="collision">
 				<geometry>

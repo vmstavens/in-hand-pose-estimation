@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="stanford_bunny">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <!-- non scaled size of bunny is 108m x 88m x 106m (LWH)-->
+          <mesh>
+            <!-- <uri>src/in_hand_pose_estimation/models/stanford_bunny/meshes/stanford_bunny.dae</uri> -->
+            <uri>/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/models/stanford_bunny/meshes/stanford_bunny.dae</uri>
+            <scale> 0.001 0.001 0.001 </scale>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          
+          <mesh>
+            <!-- <uri>src/in_hand_pose_estimation/models/stanford_bunny/meshes/stanford_bunny.dae</uri> -->
+            <uri>/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/models/stanford_bunny/meshes/stanford_bunny.dae</uri>
+            <scale> 0.001 0.001 0.001 </scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

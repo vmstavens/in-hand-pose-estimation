@@ -19,11 +19,11 @@ class ShadowFinger:
 
 	class FINGERS_NAMES():
 		"""Enum for shorthand finger strings"""
-		THUMB_FINGER  = "th"
-		INDEX_FINGER  = "ff"
+		THUMB_FINGER = "th"
+		INDEX_FINGER = "ff"
 		MIDDLE_FINGER = "mf"
-		RING_FINGER   = "rf"
-		LITTLE_FINGER  = "lf"
+		RING_FINGER = "rf"
+		LITTLE_FINGER = "lf"
 
 	def __init__(self, finger_type: str, hc: SrHandCommander, update_freq: float = 2.0, chirality: str = "rh"):
 		
@@ -237,24 +237,26 @@ class ShadowFinger:
 		self.contact_state = self.__reconcile_contact_state(self.contact_state)
 
 		# build the tactile point cloud from displaced points of contact with the depth of the deformation along the normal vector
-  
+
 		# contact points
 		P: List[Vector3] = self.contact_state.contact_positions
-  
+
 		# contact normals
 		N: List[Vector3] = self.contact_state.contact_normals
-  
+
 		# depths
 		D: List[float]   = self.contact_state.depths
-  
+
 		# displaced tactile point cloud, the values above (P, N and D) are just used to make the line below more readable...
 		self.__tactile_point_cloud.positions = [Vector3(p.x + (-N[i].x * D[i]), p.y + (-N[i].y * D[i]), p.z + (-N[i].z * D[i])) for i, p in enumerate(P)]
 
 		# fill color array
-		self.__tactile_point_cloud.colors = [ Color(self.finger_color.label, self.finger_color.color_code) for i in P]
+		self.__tactile_point_cloud.colors = [ Color(self.finger_color.label, self.finger_color.color_code) for i in P ]
 
-		# pass along the remaining values from the contact state the data, to create the tactile point cloud
-		self.__tactile_point_cloud.normals = self.contact_state.contact_normals
+		# pass along the remaining values from the contact state the data, to create the tactile point cloud. 
+		# Since the normals are given from the finger, the normals are flipped here to represent the surface normals
+		self.__tactile_point_cloud.normals = [ Vector3( -1.0*n.x, -1.0*n.y, -1.0*n.z) for n in self.contact_state.contact_normals]
+		# self.__tactile_point_cloud.normals = self.contact_state.contact_normals
 
 		# save if the tactile point cloud is empty
 		self.__tactile_point_cloud.empty   = (len(self.contact_state.contact_positions) == 0)

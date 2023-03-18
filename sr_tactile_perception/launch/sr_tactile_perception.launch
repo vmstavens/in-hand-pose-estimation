@@ -58,14 +58,6 @@
 	<!-- live plotting node -->
 	<!-- <node pkg="ros_utils_py" name="live_plotter" type="live_plotter.py" output="$(arg output)" /> -->
 
-	<!-- // Environment variables///////////////////////////////////////////////////////////////// -->
-
-	<!-- gazebo model path, where to find models -->
-	<!-- <env name="GAZEBO_PLUGIN_PATH" value="$GAZEBO_PLUGIN_PATH:/home/user/projects/shadow_robot/base/devel/lib/" />
-	<env name="GAZEBO_MODEL_PATH" value="$GAZEBO_MODEL_PATH:$(arg model_path):$(find sr_description_common)/models/" />
-	<env name="GAZEBO_MODEL_DATABASE_URI" value="" />
-	<env name="MESH_WORKSPACE_PATH" value="$MESH_WORKSPACE_PATH:$(arg model_path):$(find sr_description_common)/models/" /> -->
-
 	<!-- // Load in simulation models ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- add shadow hand model -->

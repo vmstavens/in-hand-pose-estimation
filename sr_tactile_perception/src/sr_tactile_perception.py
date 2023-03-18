@@ -51,7 +51,7 @@ def main() -> None:
 		"num_of_dp"      : 100,                                  # number of data points
 		"v_ref"          : [0.0, 1.0, 0.0],                      # the reference vector for error calc
 		"dt"             : 0.5,                                  # the time between data collection
-		"prop"           : rospy.get_param("/prop_name"),             # prop we are testing on
+		"prop_name"      : rospy.get_param("/prop_name"),             # prop we are testing on
 		"prop_mechanics" : rospy.get_param("/prop_mechanics") # contact mechanics (static or dynamic)
 	}
 
@@ -59,10 +59,14 @@ def main() -> None:
 	sh.set_q(hand_q)
 
 	# # log data
-	# if experiment_config["prop_name"] != "sphere":
-	# 	wait_for_stable_contact(sh, hand_q)
-  
-	# log_data(sh,hand_q,experiment_config)
+	if experiment_config["prop_name"] != "sphere" or experiment_config["prop_name"] != "stanford_bunny":
+		wait_for_stable_contact(sh, hand_q)
+
+	# while True:
+	# 	rospy.sleep(1)
+	# 	log.info(sh.contact_states[sh.index_finger])
+
+	log_data(sh,hand_q,experiment_config)
  
 	keep_alive(rospy.get_name())
  
