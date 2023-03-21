@@ -62,6 +62,7 @@ class ShadowFinger:
 		# subscribe and print the found contacts
 		if self.__is_biotac_sim_live:
 			self.__tac_sub = rospy.Subscriber(f"/contacts/{self.__chirality}_{self.__finger_type}/distal", ContactsState, callback = self.__read_biotac_sim, queue_size = 1)
+			self.__tac_sub_fast = rospy.Subscriber(f"/contacts/{self.__chirality}_{self.__finger_type}/distal", ContactsState, callback=self.__read_biotac_sim_fast, queue_size=1)
 
 	@property
 	def name(self) -> str:
@@ -294,10 +295,10 @@ class ShadowFinger:
 
 			# make an array of True or False, depending on the dot product of n and n1, n2, n3 etc. If the dot product is positive the vectors are pointing in the same direction and the value True is added to the list
 			inlier_array: List[bool] = [True if geometry.dot(n, ni) > 0 else False for ni in cs.contact_normals]
-   
+
 			# check if there are not Trues or Falses in the array
 			is_inlier = True if inlier_array.count(True) >= inlier_array.count(False) else False
-   
+
 			# if there are more Trues than Falses, then n in an inlier and we continue
 			if is_inlier:
 				continue
@@ -310,3 +311,22 @@ class ShadowFinger:
 				result.total_wrench.torque = geometry.prod(cs.total_wrench.torque, -1.0 )
 				
 		return result
+
+	def __read_biotac_sim_fast(self, data: Optional[ContactsState]) -> None:
+		# 0) make contact, set bool for building contact state buffer in "__read_biotac_sim", and write (if not __fill_my_buffer: return) in this function
+		# 1) class must have a contact_state_buffer JSON
+		# 2) JSON must be populated over N * dt seconds [callback function "fill contact buffer"]
+		# 	2.a) when executed N times (maybe a member keeping track of the number of iterations)
+		# 	2.b) append to buffer JSON member and update iterator for each iteration
+		# 	2.c) once iterator reaches a goal value, flip bool for building contact buffer.
+		# 3) loop over all saved contact states
+		# 	3.a) locate all iterations of the same points (this number will likely vary greatly), based on euclidean distance between the same contact points from different time steps
+		# 	3.b) vote on the correct contact direction
+		# 	3.c) correct all contact point parameters (normals, forces and torques) to have the voted upon direction
+		# 4) build the now corrected contact state and return it as a in "__reconcile_contact_state"
+		a = {
+			"" : {
+				"" : data
+			}
+		}
+		return

@@ -5,10 +5,10 @@
 	<arg name="model_path" default="$(find sr_tactile_perception)/../models" />
 
 	<!-- gazebo model path, where to find models -->
-	<env name="GAZEBO_PLUGIN_PATH" value="$GAZEBO_PLUGIN_PATH:/home/user/projects/shadow_robot/base/devel/lib/" />
-	<env name="GAZEBO_MODEL_PATH" value="$GAZEBO_MODEL_PATH:$(arg model_path):$(find sr_description_common)/models/" />
-	<env name="GAZEBO_MODEL_DATABASE_URI" value="" />
-	<env name="MESH_WORKSPACE_PATH" value="$MESH_WORKSPACE_PATH:$(arg model_path):$(find sr_description_common)/models/" />
+	<!-- <env name="GAZEBO_PLUGIN_PATH" value="$GAZEBO_PLUGIN_PATH:/home/user/projects/shadow_robot/base/devel/lib/" /> -->
+	<!-- <env name="GAZEBO_MODEL_PATH" value="$GAZEBO_MODEL_PATH:$(arg model_path):$(find sr_description_common)/models/" /> -->
+	<!-- <env name="GAZEBO_MODEL_DATABASE_URI" value="" /> -->
+	<!-- <env name="MESH_WORKSPACE_PATH" value="$MESH_WORKSPACE_PATH:$(arg model_path):$(find sr_description_common)/models/" /> -->
 
 	<arg name="prop_name" default="cube" />
 	<arg name="prop_mechanics" default="static" />

@@ -2,9 +2,30 @@
 
 from utils import Vector3
 from math import sqrt
+import glob
+from typing import Tuple, List
+import json
 
-FILE_PATHS_DATA = ["../data/stat_2023317_19544.json", "../data/stat_2023317_19952.json", "../data/stat_2023317_191745.json"]
-# FILE_PATHS_DATA = ["data/stat_202337_10553.json", "data/stat_202337_10315.json", "data/stat_202337_105044.json"]
+
+def get_date_num(path: str) -> str:
+	return "".join(path.split("/")[-1].split(".")[0].split("_"))
+
+def newest_data_set_path(prop_name: str) -> str:
+	data_file_paths = glob.glob("../data/*")
+	new_prop_num = 0
+	new_prop_path = ""
+	for path in data_file_paths:
+		print(path)
+		with open(path, "r") as f:
+			js = json.load(f)
+			if "experiment_config" not in js:
+				return ""
+			if js["experiment_config"]["prop_name"] == prop_name and int(get_date_num(path)) > new_prop_num:
+				new_prop_num = int(get_date_num(path))
+				new_prop_path = path
+	return new_prop_path
+
+FILE_PATHS_DATA = [newest_data_set_path("cube"), newest_data_set_path("edge"), newest_data_set_path("sphere"), newest_data_set_path("stanford_bunny")]
 
 AXIS_LIMITS = {
 	"x_lim": [
@@ -43,7 +64,10 @@ MARKER_SIZE = 10
 NUMBER_OF_PLOTS = 9
 
 FLAT_REF_VEC = Vector3(0.0, 1.0, 0.0)
-EDGE_REF_VEC = (Vector3(1.0/sqrt(2), -1.0/sqrt(2), 0.0), Vector3(-1.0/sqrt(2), -1.0/sqrt(2), 0.0), Vector3(0.0, 1.0, 0.0))
+EDGE_REF_VEC = (
+    Vector3(-1.0/sqrt(2), -1.0/sqrt(2), 0.0), 
+    Vector3(0.0, -1.0, 0.0),
+    Vector3(1.0/sqrt(2), -1.0/sqrt(2), 0.0))
 SPHERE_REF_VEC = Vector3(0.0, 1.0, 0.0)
 SPHERE_CENTER = Vector3(0.098090, -0.292110, 0.991616)
 

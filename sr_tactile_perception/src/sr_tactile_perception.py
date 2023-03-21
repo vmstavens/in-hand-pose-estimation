@@ -58,8 +58,8 @@ def main() -> None:
 	# set the hand q
 	sh.set_q(hand_q)
 
-	# # log data
-	if experiment_config["prop_name"] != "sphere" or experiment_config["prop_name"] != "stanford_bunny":
+	# log data
+	if experiment_config["prop_name"] != "sphere" and experiment_config["prop_name"] != "stanford_bunny":
 		wait_for_stable_contact(sh, hand_q)
 
 	# while True:
@@ -85,7 +85,6 @@ def log_data(sh: ShadowHand, fingers: Dict, experiment_config: Dict) -> None:
 
 	# open the file and clear its content
 	log_file = create_log_file(data_dir)
-
 
 	# now all fingers have made contact, wait for deformation to happen
 	rospy.sleep(2)
@@ -148,8 +147,10 @@ def wait_for_stable_contact(sh: ShadowHand, q: Dict) -> bool:
 	return False
 
 def create_log_file(data_dir: str):
-	date = datetime.now()
-	json_file = open(data_dir + "stat_" + date.today().strftime(f"{date.year}{date.month}{date.day}_{date.hour}{date.minute}{date.second}") + ".json", "w")
+	# getting the timestamp
+	date_time = datetime.fromtimestamp(datetime.timestamp(datetime.now()))
+	str_date_time = date_time.strftime("%Y%m%d_%H%M%S")
+	json_file = open(f"{data_dir}" + f"{str_date_time}" + ".json", "w")
 	json_file.truncate(0)
 	return json_file
 

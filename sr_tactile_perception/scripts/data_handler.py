@@ -33,7 +33,7 @@ class DataHandler:
 			self.__experiment_config_dict = experiment_config
 			self.__num_of_dp = experiment_config["num_of_dp"]
 			self.__dt = experiment_config["dt"]
-			self.__prop = experiment_config["prop_name"]
+			self.__prop_name = experiment_config["prop_name"]
 
 		@property
 		def num_of_dp(self):
@@ -44,8 +44,8 @@ class DataHandler:
 			return self.__dt
 
 		@property
-		def prop(self):
-			return self.__prop
+		def prop_name(self):
+			return self.__prop_name
 
 	class Finger:
 
