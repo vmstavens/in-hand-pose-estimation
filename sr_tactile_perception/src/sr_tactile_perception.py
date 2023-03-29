@@ -92,7 +92,7 @@ def log_data(sh: ShadowHand, fingers: Dict, experiment_config: Dict) -> None:
 	for i in range(DESIRED_NUMBER_OF_DATA_POINTS):
 
 		# progress bar....
-		log.info(f"Data points sampled: {i + 1}/{DESIRED_NUMBER_OF_DATA_POINTS}...")
+		log.info(f"Data points sampled: {i + 1}/{DESIRED_NUMBER_OF_DATA_POINTS}.................................................................................................................")
 
 		# sampling time
 		rospy.sleep(SAMPLING_DT)
@@ -123,6 +123,7 @@ def log_data(sh: ShadowHand, fingers: Dict, experiment_config: Dict) -> None:
 
 	json.dump(json_data, log_file, indent=4)
 	log.success("Successfully saved tactile data")
+	exit()
 
 
 def wait_for_stable_contact(sh: ShadowHand, q: Dict) -> bool:

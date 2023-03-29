@@ -28,13 +28,14 @@ def main() -> None:
 	log = Logger()
  
 	# print tactile information when available
-	while (True):
-		time.sleep(1)
+	# while (True):
+	# 	time.sleep(1)
 		
-		if sh.index_finger.is_in_contact:
-			log.info(f"contact point coordinates: {sh.index_finger.contact_state}")
-		else:
-			log.info("waiting for contacts...")
+		# if sh.index_finger.is_in_contact:
+		# 	log.info(f"contact point coordinates: {sh.index_finger.contact_state}")
+		# else:
+		# 	log.info("waiting for contacts...")
+	keep_alive(rospy.get_name())
 
 if __name__ == '__main__':
 	try:

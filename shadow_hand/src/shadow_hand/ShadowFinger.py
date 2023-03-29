@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 from sr_robot_commander.sr_hand_commander import SrHandCommander
 import rospy
 from gazebo_msgs.msg import ContactsState, ContactState
-from geometry_msgs.msg import Vector3
+from geometry_msgs.msg import Vector3, Wrench
 import time
 
 from ros_utils_py.log import Logger
 from ros_utils_py.msg import PointCloud, Color
-from ros_utils_py.geometry import geometry
+from ros_utils_py.geometry import geometry as geo
 from ros_utils_py.utils import COLORS_RGBA, COLOR
 
 import numpy as np
+from math import sqrt
+from sklearn.cluster import DBSCAN
 
 class ShadowFinger:
 	"""A wrapper class for interacting with the individual fingers of a Shadow Dexterous Hand"""
@@ -35,7 +37,15 @@ class ShadowFinger:
 		self.__finger_type: str = finger_type
 		self.__chirality: str = chirality
 		self.__tac_topic: str = f"/contacts/{chirality}_{finger_type}/distal"
+		self.__contact_states_sample: List[ContactState] = []
 		self.__contact_state: Optional[ContactState] = ContactState()
+		self.__CONTACT_STATES_SAMPLE_THRESHOLD = 11
+		# self.__CONTACT_STATES_SAMPLE_THRESHOLD = 51
+		self.__SAME_POINT_DISTANCE_THRESHOLD = 0.0002  # m i.e. 0.2 mm
+		# self.__SAME_POINT_DISTANCE_THRESHOLD = 0.0005  # m i.e. 0.5 mm
+		self.__contact_state_sanitized = ContactState()
+		# experimental end --------------------------------------------------
+  
 		self.__name: str = f"{self.__chirality}_{self.__finger_type.upper()}"
 		self.__tactile_point_cloud: PointCloud = PointCloud()
 
@@ -61,8 +71,12 @@ class ShadowFinger:
   
 		# subscribe and print the found contacts
 		if self.__is_biotac_sim_live:
-			self.__tac_sub = rospy.Subscriber(f"/contacts/{self.__chirality}_{self.__finger_type}/distal", ContactsState, callback = self.__read_biotac_sim, queue_size = 1)
-			self.__tac_sub_fast = rospy.Subscriber(f"/contacts/{self.__chirality}_{self.__finger_type}/distal", ContactsState, callback=self.__read_biotac_sim_fast, queue_size=1)
+			# runs slow and sets __contact_state to a sanitized contact state
+			self.__tac_sub        = rospy.Subscriber(f"/contacts/{self.__chirality}_{self.__finger_type}/distal", ContactsState, callback = self.__read_biotac_sim, queue_size = 1)
+			# runs fast and creates a sanitized contact state
+			self.__tac_sub_sanitize = rospy.Subscriber(f"/contacts/{self.__chirality}_{self.__finger_type}/distal", ContactsState, callback=self.__sanitize_biotac_sim, queue_size=1)
+			self.__is_contact_states_sample_full: bool = False
+			
 
 	@property
 	def name(self) -> str:
@@ -117,7 +131,7 @@ class ShadowFinger:
 	@property
 	def is_in_contact(self) -> bool:
 		"""returns if the finger is in contact"""
-		return False if len(self.contact_state.contact_positions) == 0 else True
+		return False if (len(self.contact_state.contact_positions) == 0) else True
 
 	@property
 	def tactile_point_cloud(self) -> PointCloud:
@@ -199,6 +213,9 @@ class ShadowFinger:
 
 		return self.contact_state
 
+	def save_tactile_point_cloud(self, path_to_file: str) -> bool:	
+		return True
+
 	def __is_biotac_sim_live(self) -> bool:
 		"""check if the biotac_sim_plugin package has been loaded"""
 		published_topics = rospy.get_published_topics()
@@ -210,57 +227,6 @@ class ShadowFinger:
 		else:
 			self.__log.error("the biotac_sim_plugin topics have NOT been found....")
 			return False
-
-	def __read_biotac_sim(self, data: Optional[ContactsState]) -> None:
-		"""the callback function used to sample tactile data from biotac_sim_plugin
-
-		Args:
-			data (ContactsState): a Gazebo ContactsState, which is a list of contact states, each finger has a contact state with multiple points with data
-		"""
-
-		# sleep
-		time.sleep( 1.0 / self.__update_freq )
-  
-		# if no data is received yet
-		if len(data.states) == 0:
-			self.__tactile_point_cloud = PointCloud(empty=True)
-			self.__contact_state = ContactState()
-			return
-
-		# if contact has been made, set this finger's contact state to the correct received one
-		for cs in data.states:
-			# if this finger is one of the ones in collision
-			if (self.__get_finger_type_in_collision_strings(cs.collision1_name, cs.collision2_name) == self.__finger_type):
-				self.contact_state = cs
-				break
-
-		# reconcile contact states such that all normals and other vectors are pointing in the correct direction
-		self.contact_state = self.__reconcile_contact_state(self.contact_state)
-
-		# build the tactile point cloud from displaced points of contact with the depth of the deformation along the normal vector
-
-		# contact points
-		P: List[Vector3] = self.contact_state.contact_positions
-
-		# contact normals
-		N: List[Vector3] = self.contact_state.contact_normals
-
-		# depths
-		D: List[float]   = self.contact_state.depths
-
-		# displaced tactile point cloud, the values above (P, N and D) are just used to make the line below more readable...
-		self.__tactile_point_cloud.positions = [Vector3(p.x + (-N[i].x * D[i]), p.y + (-N[i].y * D[i]), p.z + (-N[i].z * D[i])) for i, p in enumerate(P)]
-
-		# fill color array
-		self.__tactile_point_cloud.colors = [ Color(self.finger_color.label, self.finger_color.color_code) for i in P ]
-
-		# pass along the remaining values from the contact state the data, to create the tactile point cloud. 
-		# Since the normals are given from the finger, the normals are flipped here to represent the surface normals
-		self.__tactile_point_cloud.normals = [ Vector3( -1.0*n.x, -1.0*n.y, -1.0*n.z) for n in self.contact_state.contact_normals]
-		# self.__tactile_point_cloud.normals = self.contact_state.contact_normals
-
-		# save if the tactile point cloud is empty
-		self.__tactile_point_cloud.empty   = (len(self.contact_state.contact_positions) == 0)
 
 	def __get_finger_type_in_collision_strings(self, collision1_name: str, collision2_name: str) -> str:
 		""" contact states are given independent of which finger experiences it. We therefore filter 
@@ -285,48 +251,207 @@ class ShadowFinger:
 		finger_type = l_finger_collision_name[1].replace("distal", "").split("_")[1]
 		return finger_type
 
-	def __reconcile_contact_state(self, cs: ContactState) -> ContactState:
-		"""due to Gazebo sometimes mirroring contact directions in simulation such that normals point in the wrong direction, the contact states vote on which direction is correct"""
+	def __read_biotac_sim(self, data: Optional[ContactsState]) -> None:
+		"""the callback function used to sample tactile data from biotac_sim_plugin. It takes a Gazebo ContactsState, which is a list of contact states, each finger has a contact state with multiple points with data"""
 
-		result: ContactState = cs
+		# wait for the sample list to fill up
+		if not self.__is_contact_states_sample_full:
+			return
 
-		# loop over all contact normals
-		for i, n in enumerate(cs.contact_normals):
+		# reconcile contact states such that all normals and other vectors are pointing in the correct direction
+		self.__contact_state = self.__contact_state_sanitized  # self.__reconcile_contact_state(self.contact_state)
 
-			# make an array of True or False, depending on the dot product of n and n1, n2, n3 etc. If the dot product is positive the vectors are pointing in the same direction and the value True is added to the list
-			inlier_array: List[bool] = [True if geometry.dot(n, ni) > 0 else False for ni in cs.contact_normals]
+		# build the tactile point cloud from displaced points of contact with the depth of the deformation along the normal vector
 
-			# check if there are not Trues or Falses in the array
-			is_inlier = True if inlier_array.count(True) >= inlier_array.count(False) else False
+		# contact points
+		P: Optional[List[Vector3]] = self.__contact_state.contact_positions
 
-			# if there are more Trues than Falses, then n in an inlier and we continue
-			if is_inlier:
-				continue
-			else:
-				# flip the normal n and all other vectors in the contact state
-				result.contact_normals[i]  = geometry.prod(cs.contact_normals[i],  -1.0 )
-				result.wrenches[i].force   = geometry.prod(cs.wrenches[i].force,   -1.0 )
-				result.wrenches[i].torque  = geometry.prod(cs.wrenches[i].torque,  -1.0 )
-				result.total_wrench.force  = geometry.prod(cs.total_wrench.force,  -1.0 )
-				result.total_wrench.torque = geometry.prod(cs.total_wrench.torque, -1.0 )
-				
-		return result
+		# contact normals
+		N: Optional[List[Vector3]] = self.__contact_state.contact_normals
 
-	def __read_biotac_sim_fast(self, data: Optional[ContactsState]) -> None:
-		# 0) make contact, set bool for building contact state buffer in "__read_biotac_sim", and write (if not __fill_my_buffer: return) in this function
-		# 1) class must have a contact_state_buffer JSON
-		# 2) JSON must be populated over N * dt seconds [callback function "fill contact buffer"]
-		# 	2.a) when executed N times (maybe a member keeping track of the number of iterations)
-		# 	2.b) append to buffer JSON member and update iterator for each iteration
-		# 	2.c) once iterator reaches a goal value, flip bool for building contact buffer.
-		# 3) loop over all saved contact states
-		# 	3.a) locate all iterations of the same points (this number will likely vary greatly), based on euclidean distance between the same contact points from different time steps
-		# 	3.b) vote on the correct contact direction
-		# 	3.c) correct all contact point parameters (normals, forces and torques) to have the voted upon direction
-		# 4) build the now corrected contact state and return it as a in "__reconcile_contact_state"
-		a = {
-			"" : {
-				"" : data
-			}
-		}
+		# depths
+		D: List[float]   = self.__contact_state.depths
+
+		# displaced tactile point cloud, the values above (P, N and D) are just used to make the line below more readable...
+		self.__tactile_point_cloud.positions = [Vector3(p.x + (-N[i].x * D[i]), p.y + (-N[i].y * D[i]), p.z + (-N[i].z * D[i])) for i, p in enumerate(P)]
+
+		# fill color array
+		self.__tactile_point_cloud.colors = [ Color(self.finger_color.label, self.finger_color.color_code) for i in P ]
+
+		# pass along the remaining values from the contact state the data, to create the tactile point cloud. Since the normals are given from the finger, the normals are flipped here to represent the surface normals
+		self.__tactile_point_cloud.normals = [ Vector3( -1.0*n.x, -1.0*n.y, -1.0*n.z) for n in self.__contact_state.contact_normals]
+		# self.__tactile_point_cloud.normals = self.contact_state.contact_normals
+
+		# save if the tactile point cloud is empty
+		self.__tactile_point_cloud.empty   = (len(self.contact_state.contact_positions) == 0)
+  
+		# reset contact_states_sample
+		self.__contact_states_sample.clear()
+		self.__is_contact_states_sample_full = False
+
+	def __sanitize_biotac_sim(self, data: Optional[ContactsState]) -> None:
+		"""This is a callback function which runs at ~100Hz. It builds a lit of contacts states until the list contains enough elements, sanitizes them and returns a correct contact state"""
+
+		# return if no data is received yet
+		if len(data.states) == 0: return
+
+		# when we have filled up the array with "self.__contact_state_sample_size" elements
+		if len(self.__contact_states_sample) >= self.__CONTACT_STATES_SAMPLE_THRESHOLD:
+			self.__contact_state_sanitized = self.__sanitize_contact_states(self.__contact_states_sample)
+			self.__is_contact_states_sample_full = True
+			return
+		else:
+			# if contact has been made, append the correct contact state to __contact_states_sample
+			for cs in data.states:
+				# among the received contact states, append the one related to this finger
+				if (self.__get_finger_type_in_collision_strings(cs.collision1_name, cs.collision2_name) == self.__finger_type):
+					self.__contact_states_sample.append(cs)
+					break
 		return
+
+	def __sanitize_contact_states(self, css: List[ContactState]) -> Optional[ContactState]:
+
+		def __index_of_sameish_point(cp: Vector3, cs: ContactState,csi: int, dist_threshold: float) -> Optional[Tuple[int,int]]:
+			"""returns the index of the contact point closest to cp in cs, None is returned if no distance is below dist_threshold"""
+			closest_point_index = 0
+			shortest_dist = 1000 # 1km distance, should be more than enough
+			for i, cpi in enumerate(cs.contact_positions):
+				# first we find the point closest to the one provided
+				if geo.l2_dist(cp, cpi) < shortest_dist:
+					closest_point_index = i
+					shortest_dist = geo.l2_dist(cp, cpi)
+			# we then determine if the found distance is sufficiently low to be considered the same point
+			if shortest_dist <= dist_threshold:
+				return (csi,closest_point_index)
+			return None
+
+		def __euclidean_clustering(points, eps, min_samples):
+			"""
+			Perform Euclidean clustering on a list of 3D points.
+			
+			Parameters:
+			points (list of tuples): A list of 3D points.
+			eps (float): The maximum distance between two points for them to be considered as in the same neighborhood.
+			min_samples (int): The minimum number of points in a neighborhood for it to be considered as a cluster.
+			
+			Returns:
+			list: The indices of the points in the largest cluster.
+			"""
+			# Create a numpy array from the list of points
+			X = np.array(points)
+			
+			# Perform DBSCAN clustering
+			dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+			dbscan.fit(X)
+			
+			# Extract the cluster labels
+			labels = dbscan.labels_
+   
+			# in case the number of contact points is so small, no clusters can be defined
+			if all([l == -1 for l in labels]):
+				return []
+			
+			# Extract the indices of the points in the largest cluster
+			cluster_sizes = np.bincount(labels[labels != -1])
+			largest_cluster_label = np.argmax(cluster_sizes)
+			largest_cluster_indices = np.where(labels == largest_cluster_label)[0]
+			# Return the indices of the points in the largest cluster
+			largest_cluster_points = [points[i] for i in largest_cluster_indices.tolist()]
+
+			return largest_cluster_points
+
+		def __vec2tuple(v: Vector3) -> Tuple[float,float,float]:
+			if type(v) is tuple:
+				return v
+			else:
+				return (v.x,v.y,v.z)
+
+		def __tuple2vec(t: Tuple) -> Vector3:
+			if type(t) is tuple:
+				return Vector3(t[0], t[1], t[2])
+			else:
+				raise ValueError(f"Wrong input type in __tuple2vec, expected tuple, got {type(t)}")
+
+		def __calculate_centroid(points: List[Tuple]):
+			"""
+			Calculate the centroid of a set of 3D points.
+			
+			Parameters:
+			points (list of tuples): A list of 3D points.
+			
+			Returns:
+			tuple: The x, y, and z coordinates of the centroid.
+			"""
+			# Convert the list of points to a numpy array
+			points_array = np.array(points)
+			
+			# Calculate the mean of the x, y, and z coordinates
+			x_mean = np.mean(points_array[:,0])
+			y_mean = np.mean(points_array[:,1])
+			z_mean = np.mean(points_array[:,2])
+			
+			# Return the centroid as a tuple
+			return (x_mean, y_mean, z_mean)
+
+		def __is_empty(l: List) -> bool:
+			return len(l) == 0
+
+		if __is_empty(css):
+			print(f"css is empty")
+			return ContactState()
+
+		best_cs = ContactState()
+		# find the best contact state based on the number of contact points and its index in the list of contact states
+		for i, cs in enumerate(css):
+			if len(cs.contact_positions) > len(best_cs.contact_positions):
+				best_cs = cs
+
+		if len(best_cs.contact_positions) < 5:
+			return best_cs
+
+		for i, cp in enumerate(best_cs.contact_positions):
+
+			# contains tuples of contact state indices and indices for data i.e. normals, points, forces and torques e.g. (1,2) meaning contact state 1/self.__CONTACT_STATES_SAMPLE_THRESHOLD, contact normal at index 2
+			index_tuples: List[Tuple[int, int]] = []
+
+			# fill the index tuples list
+			for csi, cs in enumerate(css):
+				corr_tup: Optional[Tuple[int, int]] = __index_of_sameish_point(cp, cs, csi, self.__SAME_POINT_DISTANCE_THRESHOLD)
+				if corr_tup is None:
+					continue
+				else:
+					index_tuples.append(corr_tup)
+
+			# loop through the same point in all contact states paired with their contact state index
+			same_normals, same_forces, same_torques = [], [], []
+			for csi, ni in index_tuples:
+				same_normal: Vector3 = css[csi].contact_normals[ni]
+				same_force:  Vector3 = css[csi].wrenches[ni].force
+				same_torque: Vector3 = css[csi].wrenches[ni].torque
+    
+				same_normals.append(same_normal)
+				same_forces.append(same_force)
+				same_torques.append(same_torque)
+
+			# convert all lists to tuples
+			same_normals = [__vec2tuple(n) for n in same_normals ]
+			same_forces  = [__vec2tuple(f) for f in same_forces  ]
+			same_torques = [__vec2tuple(t) for t in same_torques ]
+   
+			# compute the largest cluster of normals
+			largest_normals_cluster_points = __euclidean_clustering(same_normals, 0.01, 3)
+			largest_forces_cluster_points = __euclidean_clustering(same_forces,   0.01, 3)
+			largest_torques_cluster_points = __euclidean_clustering(same_torques, 0.01, 3)
+
+			if __is_empty(largest_normals_cluster_points) or __is_empty(largest_forces_cluster_points) or __is_empty(largest_torques_cluster_points):
+				return best_cs
+
+			new_normal = __calculate_centroid(largest_normals_cluster_points)
+			new_force = __calculate_centroid(largest_normals_cluster_points)
+			new_torque = __calculate_centroid(largest_normals_cluster_points)
+
+			best_cs.contact_normals[i] = __tuple2vec(new_normal)
+			best_cs.wrenches[i].force = __tuple2vec(new_force)
+			best_cs.wrenches[i].torque = __tuple2vec(new_torque)
+
+		return best_cs

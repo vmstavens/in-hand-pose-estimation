@@ -50,6 +50,7 @@
 			<plugin filename="libsim_biotac.so" name="sim_biotac">
 			<alwaysOn>true</alwaysOn>
 			<updateRate>100.0</updateRate>
+			<!-- <updateRate>100.0</updateRate> -->
 		</plugin>
 	</gazebo>
 
