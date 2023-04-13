@@ -11,12 +11,11 @@ from gazebo_msgs.srv import GetModelState, GetModelStateResponse, SetModelState
 from geometry_msgs.msg import Twist, Vector3, Wrench
 from ros_utils_py.geometry import geometry
 from ros_utils_py.log import Logger
-from ros_utils_py.msg import PointCloud
 from ros_utils_py.utils import create_pkg_dir, keep_alive, kill_on_ctrl_c
 from shadow_hand import ShadowHand
-
+from ros_utils_py.pc_utils import PointCloudUtils as pcu
 from dynamic_reconfigure.client import Client
-
+import os
 
 # init logger
 log = Logger()
@@ -37,7 +36,8 @@ def main() -> None:
 	sh: ShadowHand = ShadowHand()
 
 	# joint configuration, from base to tip (does this make contact with the pen? yes)
-	test_q: list = [math.pi/16.0, 0.0, math.pi / 2.0]
+	test_q: List = [math.pi/16.0, 0.0, math.pi / 2.0]
+	grasp_q: List = [math.pi / 2.0, math.pi / 2.0, math.pi / 2.0, math.pi / 2.0]
 	# test_q: list = [math.pi / 8.0, 0.0, math.pi / 2.0]
 
 	hand_q = {
@@ -58,17 +58,22 @@ def main() -> None:
 	# set the hand q
 	sh.set_q(hand_q)
 
+
+# /home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/sr_tactile_perception/src/../data/test.pcd
 	# log data
 	if experiment_config["prop_name"] != "sphere" and experiment_config["prop_name"] != "stanford_bunny":
 		wait_for_stable_contact(sh, hand_q)
 
-	# while True:
-	# 	rospy.sleep(1)
-	# 	log.info(sh.contact_states[sh.index_finger])
-
-	log_data(sh,hand_q,experiment_config)
+	save_path = f"{os.path.dirname(__file__)}/../data/test.pcd"
+	print(save_path)
+	save_path = "/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/sr_tactile_perception/data/testing.pcd"
+	sh.record_start()
  
-	keep_alive(rospy.get_name())
+	sh.record_stop(save_path=save_path)
+	# log_data(sh,hand_q,experiment_config)
+
+	# keep_alive(rospy.get_name())
+	exit()
  
 
 def log_data(sh: ShadowHand, fingers: Dict, experiment_config: Dict) -> None:

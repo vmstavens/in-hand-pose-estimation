@@ -8,7 +8,7 @@ from geometry_msgs.msg import Vector3, Wrench
 import time
 
 from ros_utils_py.log import Logger
-from ros_utils_py.msg import PointCloud, Color
+from ros_utils_py.pc_utils import PointCloudUtils as pcu
 from ros_utils_py.geometry import geometry as geo
 from ros_utils_py.utils import COLORS_RGBA, COLOR
 
@@ -39,15 +39,11 @@ class ShadowFinger:
 		self.__tac_topic: str = f"/contacts/{chirality}_{finger_type}/distal"
 		self.__contact_states_sample: List[ContactState] = []
 		self.__contact_state: Optional[ContactState] = ContactState()
-		self.__CONTACT_STATES_SAMPLE_THRESHOLD = 11
-		# self.__CONTACT_STATES_SAMPLE_THRESHOLD = 51
+		self.__CONTACT_STATES_SAMPLE_THRESHOLD = 11 # with the plugin publishing at ~100 Hz, 11 is about once every 10 ms or 10 times pr. second
 		self.__SAME_POINT_DISTANCE_THRESHOLD = 0.0002  # m i.e. 0.2 mm
-		# self.__SAME_POINT_DISTANCE_THRESHOLD = 0.0005  # m i.e. 0.5 mm
 		self.__contact_state_sanitized = ContactState()
-		# experimental end --------------------------------------------------
-  
 		self.__name: str = f"{self.__chirality}_{self.__finger_type.upper()}"
-		self.__tactile_point_cloud: PointCloud = PointCloud()
+		self.__tactile_point_cloud: pcu.PointCloud = pcu.PointCloud()
 
 		# look up table for colors depending on finger type
 		self.__fingers_and_colors: Dict[str, COLOR] = {
@@ -76,8 +72,12 @@ class ShadowFinger:
 			# runs fast and creates a sanitized contact state
 			self.__tac_sub_sanitize = rospy.Subscriber(f"/contacts/{self.__chirality}_{self.__finger_type}/distal", ContactsState, callback=self.__sanitize_biotac_sim, queue_size=1)
 			self.__is_contact_states_sample_full: bool = False
-			
-
+		
+		# https://shadow-robot-company-dexterous-hand.readthedocs-hosted.com/en/documentation_health_metrics/user_guide/sd_robot_commander.html
+		# The limits in the current implementation of the firmware are from 200 to 1000 (measured in custom units)
+		self.__max_force: List[float] = [600.0 for j in self.__joint_names]  # cu (custom units)
+  
+  
 	@property
 	def name(self) -> str:
 		"""finger's name"""
@@ -134,9 +134,25 @@ class ShadowFinger:
 		return False if (len(self.contact_state.contact_positions) == 0) else True
 
 	@property
-	def tactile_point_cloud(self) -> PointCloud:
+	def tactile_point_cloud(self) -> pcu.PointCloud:
 		"""returns the tactile point cloud from the finger in contact"""
 		return self.__tactile_point_cloud
+
+	@property
+	def max_force(self) -> List[float]:
+		"""returns the maximum force excretable by this finger as an array of floats"""
+		return self.__max_force
+
+	@max_force.setter
+	def max_force(self, new_max_force: List[Optional[float]]) -> None:
+		"""sets the maximum force excretable by this finger as an array of floats"""
+		new_max_force_valid: List[float] = self.make_valid_q(new_max_force)
+		is_force_valid = all([nmf >= 200 and nmf <= 1000 for nmf in new_max_force_valid])
+		if not is_force_valid:
+			raise ValueError("the maximum force of a joint cannot exceed 1000 or go below 200 custom units")
+		for j in self.__joint_names:
+			self.__hand_commander.set_max_force(j,new_max_force_valid)
+		self.__max_force = new_max_force_valid
 
 	def make_valid_q(self,q: List[Optional[float]]) -> List[float]:
 		"""this function converts a q into a des_q which has the correct number of elements and constants joint values for Nones in q e.g.
@@ -213,7 +229,7 @@ class ShadowFinger:
 
 		return self.contact_state
 
-	def save_tactile_point_cloud(self, path_to_file: str) -> bool:	
+	def save_tactile_point_cloud(self, path_to_file: str) -> bool:
 		return True
 
 	def __is_biotac_sim_live(self) -> bool:
@@ -259,7 +275,7 @@ class ShadowFinger:
 			return
 
 		# reconcile contact states such that all normals and other vectors are pointing in the correct direction
-		self.__contact_state = self.__contact_state_sanitized  # self.__reconcile_contact_state(self.contact_state)
+		self.__contact_state = self.__contact_state_sanitized
 
 		# build the tactile point cloud from displaced points of contact with the depth of the deformation along the normal vector
 
@@ -273,17 +289,20 @@ class ShadowFinger:
 		D: List[float]   = self.__contact_state.depths
 
 		# displaced tactile point cloud, the values above (P, N and D) are just used to make the line below more readable...
-		self.__tactile_point_cloud.positions = [Vector3(p.x + (-N[i].x * D[i]), p.y + (-N[i].y * D[i]), p.z + (-N[i].z * D[i])) for i, p in enumerate(P)]
+		self.__tactile_point_cloud.points = np.array([(p.x + (-N[i].x * D[i]), p.y + (-N[i].y * D[i]), p.z + (-N[i].z * D[i])) for i, p in enumerate(P)])
+		# self.__tactile_point_cloud.positions = [Vector3(p.x + (-N[i].x * D[i]), p.y + (-N[i].y * D[i]), p.z + (-N[i].z * D[i])) for i, p in enumerate(P)]
 
 		# fill color array
-		self.__tactile_point_cloud.colors = [ Color(self.finger_color.label, self.finger_color.color_code) for i in P ]
+		self.__tactile_point_cloud.colors = [ self.finger_color.color_code for i in P ]
+		# self.__tactile_point_cloud.colors = [ Color(self.finger_color.label, self.finger_color.color_code) for i in P ]
 
 		# pass along the remaining values from the contact state the data, to create the tactile point cloud. Since the normals are given from the finger, the normals are flipped here to represent the surface normals
-		self.__tactile_point_cloud.normals = [ Vector3( -1.0*n.x, -1.0*n.y, -1.0*n.z) for n in self.__contact_state.contact_normals]
+		self.__tactile_point_cloud.normals = [ ( -1.0*n.x, -1.0*n.y, -1.0*n.z) for n in self.__contact_state.contact_normals]
+		# self.__tactile_point_cloud.normals = [ Vector3( -1.0*n.x, -1.0*n.y, -1.0*n.z) for n in self.__contact_state.contact_normals]
 		# self.__tactile_point_cloud.normals = self.contact_state.contact_normals
 
 		# save if the tactile point cloud is empty
-		self.__tactile_point_cloud.empty   = (len(self.contact_state.contact_positions) == 0)
+		# self.__tactile_point_cloud.empty   = (len(self.contact_state.contact_positions) == 0)
   
 		# reset contact_states_sample
 		self.__contact_states_sample.clear()

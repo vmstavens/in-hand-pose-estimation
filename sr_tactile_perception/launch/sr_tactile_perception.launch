@@ -50,8 +50,8 @@
 	<node pkg="sr_tactile_perception" type="sr_tactile_perception.py" name="sr_tactile_perception" output="$(arg output)"/>
 
 	<!-- test node -->
-	<!-- <param name="prop_mechanics_param" type="string" value="$(arg prop_mechanics)" /> -->
-	<!-- <node pkg="sr_tactile_perception" type="test.py" name="test" output="$(arg output)" >
+	<!-- <param name="prop_mechanics_param" type="string" value="$(arg prop_mechanics)" />
+	<node pkg="sr_tactile_perception" type="test.py" name="test" output="$(arg output)" >
 		<param name="test" value="this_is_a_testing_string" type="string" />
 	</node> -->
 

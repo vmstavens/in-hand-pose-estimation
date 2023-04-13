@@ -6,12 +6,12 @@ from sr_robot_commander.sr_hand_commander import SrHandCommander
 from sr_utilities.hand_finder import HandFinder
 from typing import List, Dict, Optional, Union
 import rospy
-from gazebo_msgs.msg import ContactState
+from gazebo_msgs.msg import ContactState, ContactsState
 
 from shadow_hand.ShadowFinger import ShadowFinger
 from shadow_hand.ShadowWrist import ShadowWrist
-from ros_utils_py.msg import PointCloud
-from ros_utils_py.gazebo import gazebo
+from ros_utils_py.pc_utils import PointCloudUtils as pcu
+# from ros_utils_py.gazebo import gazebo
 import rosnode
 
 class ShadowHand:
@@ -73,6 +73,16 @@ class ShadowHand:
 
 		# define wrist
 		self.__wrist = ShadowWrist(hc=self.__hand_commander,chirality=self.__hand_chirality)
+  
+		# tactile point cloud
+		self.__tactile_point_cloud: pcu.PointCloud = pcu.PointCloud()
+
+		# start recording tactile data
+		self.__is_recording: bool = False
+		if self.__is_biotac_sim_live:
+			self.__sub_record_tac = rospy.Subscriber(f"/contacts/{self.__hand_chirality}_ff/distal", ContactsState, callback=self.__record_tac, queue_size=1)
+			self.__save_path_record_tac = ""
+		self.__recorded_tactile_point_cloud: pcu.PointCloud = pcu.PointCloud()
   
 		self.__log.success("Successfully set up connection to Shadow Dexterous Hand...")
 
@@ -139,7 +149,7 @@ class ShadowHand:
 			self.__index_finger  : self.__index_finger.contact_state,
 			self.__middle_finger : self.__middle_finger.contact_state,
 			self.__ring_finger   : self.__ring_finger.contact_state,
-			self.__little_finger  : self.__little_finger.contact_state
+			self.__little_finger : self.__little_finger.contact_state
 		}
 
 	@property
@@ -163,10 +173,54 @@ class ShadowHand:
 		return self.__is_biotac_sim_live
 
 	@property
-	def tactile_point_cloud(self) -> PointCloud:
+	def tactile_point_cloud(self) -> pcu.PointCloud:
 		"""a point cloud made from the tactile data from all fingers"""
-		return gazebo.combine_point_clouds(*[f.tactile_point_cloud for f in self.fingers])
-		
+		self.__tactile_point_cloud = pcu.PointCloud.empty()
+		for f in self.fingers:
+			self.__tactile_point_cloud.extend(f.tactile_point_cloud)
+		return self.__tactile_point_cloud
+		# return gazebo.combine_point_clouds(*[f.tactile_point_cloud for f in self.fingers])
+
+	@property
+	def max_force(self) -> Dict[ShadowFinger,List[float]]:
+		return {
+			self.__thumb_finger  : self.__thumb_finger.max_force ,
+			self.__index_finger  : self.__index_finger.max_force ,
+			self.__middle_finger : self.__middle_finger.max_force ,
+			self.__ring_finger   : self.__ring_finger.max_force ,
+			self.__little_finger : self.__little_finger.max_force
+		}
+
+	@max_force.setter
+	def max_force(self, new_max_forces: Dict[ShadowFinger, List[Optional[float]]]) -> None:
+		"""the maximum force the hand is allowed to exsert"""
+		for f in new_max_forces:
+			f.max_force = new_max_forces[f]
+		return
+
+	def record_start(self) -> None:
+		"""when this function is called with True, the hand will start recording tactile data, and when called with false, the recording will stop"""
+		self.__is_recording = True
+
+	def record_stop(self,save_path:str):
+		# self.__recorded_tactile_point_cloud.to_file(save_path)
+		self.__save_path_record_tac = save_path
+		self.__is_recording = False
+
+	def __record_tac(self, data: Optional[ContactsState]) -> None:
+		"""runs every ff finger publish"""
+		# the hand is recording
+		if self.__is_recording:
+			self.__recorded_tactile_point_cloud.extend(self.tactile_point_cloud)
+		# we are done recording and want to save the data
+		elif len(self.__recorded_tactile_point_cloud) != 0 and not self.__is_recording:
+			self.__log.info(f"saving pcd file to {self.__save_path_record_tac} | {len(self.__recorded_tactile_point_cloud)=}")
+			self.__recorded_tactile_point_cloud.to_file(self.__save_path_record_tac)
+			self.__recorded_tactile_point_cloud = pcu.PointCloud.empty()
+		# we have not started to record yet or have already done so
+		else:
+			return
+
 	def set_q(self,des_state: Dict[Union[ShadowFinger,ShadowWrist],List[Optional[float]]]) -> bool:
 		"""sets all joint configurations as specified in the dictionary. One such example can be seen below
 
@@ -175,7 +229,7 @@ class ShadowHand:
 				sh.index_finger  : [0.0, 0.0, π/2.0],
 				sh.middle_finger : [0.0, 0.0, π/2.0],
 				sh.ring_finger   : [0.0, 0.0, π/2.0],
-				sh.little_finger  : [0.0, 0.0, π/2.0],
+				sh.little_finger : [0.0, 0.0, π/2.0],
 				sh.wrist         : [0.0, 0.0]
 			}
 			if you want certain joints unchanged, simply leave a None

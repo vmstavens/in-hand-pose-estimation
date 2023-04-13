@@ -78,17 +78,17 @@ FORCES_TEXT     = (0.05, 0.45, "FORCES")
 TORQUES_TEXT    = (0.05, 0.20, "TORQUES")
 TIME_STATE_TEXT = (0.05, 0.95)
 
-
-
 VECTOR_SCALE = abs(AXIS_LIMITS["x_lim"][0] / SPACE_SCALE)  # just a test
 MARKER_SIZE = 10
 NUMBER_OF_PLOTS = 9
 
 FLAT_REF_VEC = Vector3(0.0, 1.0, 0.0)
+# from fingers
 EDGE_REF_VEC = (
     Vector3( -1.0 * -1.0/sqrt(2) , -1.0 * -1.0/sqrt(2) , 0.0), 
     Vector3( -1.0 * 0.0          , -1.0 * -1.0         , 0.0),
     Vector3( -1.0 * 1.0/sqrt(2)  , -1.0 * -1.0/sqrt(2) , 0.0))
+# from object
 # EDGE_REF_VEC = (
 #     Vector3(-1.0/sqrt(2), -1.0/sqrt(2), 0.0), 
 #     Vector3(0.0, -1.0, 0.0),

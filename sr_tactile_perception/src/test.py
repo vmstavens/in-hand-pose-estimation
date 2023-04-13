@@ -11,38 +11,13 @@ from gazebo_msgs.srv import GetModelState, GetModelStateResponse, SetModelState
 from geometry_msgs.msg import Twist, Vector3, Wrench
 from ros_utils_py.geometry import geometry
 from ros_utils_py.log import Logger
-from ros_utils_py.msg import PointCloud
 from ros_utils_py.utils import create_pkg_dir, keep_alive, kill_on_ctrl_c
 from shadow_hand import ShadowHand
-
-from dynamic_reconfigure.server import Server
-from dynamic_reconfigure.cfg import TestConfig
-
 
 # init logger
 log = Logger()
 
-def main() -> None:
-	
-	# server = Server()
- 
-	# how to setup server
-	# http://wiki.ros.org/dynamic_reconfigure/Tutorials/HowToWriteYourFirstCfgFile
-	t = 0
-	timeout = 100
-	while t < timeout:
-		# print(f"{rospy.get_name()} sleeping {t}/{timeout}...")
-		rospy.sleep(1)
-		t += 1
-		test_str = rospy.get_param("~test")
-		log.info(f"This is my {rospy.get_name()} parameter: {test_str}...")
-	# move_2("cube")
-	keep_alive(rospy.get_name())
-	
-	# return
-
-
-# rostopic pub - 1 /gazebo/set_model_state gazebo_msgs/ModelState "model_name: 'cube'
+# rostopic pub -1 / gazebo/set_model_state gazebo_msgs/ModelState "model_name: 'cube'
 # pose:
 #   position:
 #     x: 0.0
@@ -52,37 +27,70 @@ def main() -> None:
 #     x: 0.0
 #     y: 0.0
 #     z: 0.0
+#     w: 0.0
+# twist:
+#   linear:
+#     x: 0.0
+#     y: 1.0
+#     z: 0.0
+#   angular:
+#     x: 0.0
+#     y: 0.0
+#     z: 0.0
+# reference_frame: ''"
+# publishing and latching message for 3.0 seconds
 
 
-def move_2(prop_name: str) -> None:
+def get_model_state(model_name):
+	# rospy.init_node('get_model_state')
+	model_state_topic = '/gazebo/get_model_state'
+	model_state_msg = ModelState()
+	model_state_msg.model_name = model_name
 
-	# set_model_state_topic = "/gazebo/set_model_state"
-	model_twist_topic     = "/cube/cmd_vel"
+	# Create a rospy Subscriber to get the model state
+	model_state_sub = rospy.Subscriber(model_state_topic, ModelState, callback)
 
-	# Create a publisher to publish the twist message
-	twist_pub = rospy.Publisher(model_twist_topic, Twist, queue_size=1)
- 
-	# Create a client to call the SetModelState service
-	# set_state_client = rospy.ServiceProxy(set_model_state_topic, SetModelState)
+	# Wait for the first message to arrive
+	t = 0
+	while not rospy.is_shutdown() and not model_state_msg.pose and t < 10:
+		t += 1
+		rospy.sleep(0.1)
 
-	# Create a ModelState message to set the state of the model
-	# model_state = ModelState()
-	# model_state.model_name = prop_name
-	# model_state.reference_frame = 'world'
-	# model_state.reference_frame = 'base_link'
-	# model_state.twist.linear.y = 0.5
+	# Unsubscribe from the topic
+	model_state_sub.unregister()
 
-	# Publish the twist message to move the robot
-	twist_msg = Twist()
-	twist_msg.linear.y = 0.1
-	twist_pub.publish(twist_msg)
-	print(f"I have published to {model_twist_topic}")
+	return model_state_msg
 
-	# Call the SetModelState service to set the model state
-	# resp = set_state_client(model_state)
-	# print(resp)
-	return
 
+def callback(model_state):
+	global model_state_msg
+	model_state_msg = model_state
+
+
+def set_model_state(model_state):
+	model_state_topic = '/gazebo/set_model_state'
+	model_state_pub = rospy.Publisher(model_state_topic, ModelState, queue_size=1)
+	print("--- insert model state and make sure the states are not relative ---")
+	# Publish the model state message
+	model_state_pub.publish(model_state)
+
+
+def attempt1():
+	model_state = get_model_state("cube")
+	# Example usage
+	# model_state.model_name = 'cube'
+	# model_state.pose.position.x = 1.0
+	# model_state.twist.linear.x = 1.0
+	set_model_state(model_state)
+	# why state is fucked?
+
+def main() -> None:
+	sleep_time = 10
+	log.info(f"going to sleep for {sleep_time}")
+	rospy.sleep(sleep_time)
+	log.info("Just woke up...")
+	attempt1()
+	keep_alive(rospy.get_name())
 
 if __name__ == '__main__':
 	try:

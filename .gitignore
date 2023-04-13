@@ -1,5 +1,7 @@
 *.json
+*.txt
 *.jpg
+*.pcd
 devel/
 logs/
 build/
