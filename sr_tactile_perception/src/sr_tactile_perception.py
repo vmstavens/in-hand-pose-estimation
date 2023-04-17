@@ -3,7 +3,7 @@ import json
 import math
 from datetime import datetime
 from random import random
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import rospy
 from gazebo_msgs.msg import ContactState, ModelState
@@ -12,10 +12,12 @@ from geometry_msgs.msg import Twist, Vector3, Wrench
 from ros_utils_py.geometry import geometry
 from ros_utils_py.log import Logger
 from ros_utils_py.utils import create_pkg_dir, keep_alive, kill_on_ctrl_c
-from shadow_hand import ShadowHand
+from shadow_hand import ShadowHand, ShadowFinger, ShadowWrist
 from ros_utils_py.pc_utils import PointCloudUtils as pcu
 from dynamic_reconfigure.client import Client
 import os
+import numpy as np
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 # init logger
 log = Logger()
@@ -36,16 +38,56 @@ def main() -> None:
 	sh: ShadowHand = ShadowHand()
 
 	# joint configuration, from base to tip (does this make contact with the pen? yes)
-	test_q: List = [math.pi/16.0, 0.0, math.pi / 2.0]
-	grasp_q: List = [math.pi / 2.0, math.pi / 2.0, math.pi / 2.0, math.pi / 2.0]
-	# test_q: list = [math.pi / 8.0, 0.0, math.pi / 2.0]
+	open_q: List  = [0.0, 0.0, math.pi / 2]
+	close_q: List = [math.pi / 4, math.pi / 4, math.pi / 4]
 
-	hand_q = {
-		sh.index_finger: test_q,
-		sh.middle_finger: test_q,
-		sh.ring_finger: test_q,
-		sh.little_finger: test_q,
-	}
+	sequence: List[Dict] = []
+ 
+	sequence.append({
+		sh.index_finger: open_q,
+		sh.middle_finger: open_q,
+		sh.ring_finger: open_q,
+		sh.little_finger: open_q,
+	})
+
+	wrist_2_min_max = (-0.489, 0.174)
+	wrist_1_min_max = (-0.698, 0.489)
+
+	print(f"curve interval {wrist_2_min_max[1]=} | {wrist_2_min_max[0]=} | {0.1 * ( wrist_2_min_max[1] - wrist_2_min_max[0] )=} ------------------------------------------------------------------")
+
+	# dphi = math.pi / 8
+	phi = 0.0
+	dphi = math.pi / 256
+
+	# generate sequence
+	for theta in np.arange( wrist_2_min_max[1], wrist_2_min_max[0],  - 0.1 * ( wrist_2_min_max[1] - wrist_2_min_max[0] ) ):
+		phi_q = [0.0, math.pi/16.0, None]
+		# phi += theta
+		# sequence.append({
+		# 	sh.index_finger  : phi_q,
+		# 	sh.middle_finger : phi_q,
+		# 	sh.ring_finger   : phi_q,
+		# 	sh.little_finger : phi_q ,
+		# })
+		sequence.append({
+			sh.index_finger: phi_q,
+			sh.middle_finger: phi_q,
+			sh.ring_finger: phi_q,
+			sh.little_finger: phi_q,
+		})
+		sequence.append({sh.wrist : [theta, 0.0]})
+		sequence.append({sh.wrist : [theta, wrist_1_min_max[0] + 0.2]})
+		sequence.append({sh.wrist : [theta, wrist_1_min_max[1]]})
+
+		phi_q[1] += dphi
+
+	# close_dict = {
+	# 	sh.index_finger:  close_q,
+	# 	sh.middle_finger: close_q,
+	# 	sh.ring_finger:   close_q,
+	# 	sh.little_finger: close_q,
+	# 	sh.wrist        : [1.0]
+	# }
 
 	experiment_config = {
 		"num_of_dp"      : 100,                                  # number of data points
@@ -54,23 +96,40 @@ def main() -> None:
 		"prop_name"      : rospy.get_param("/prop_name"),             # prop we are testing on
 		"prop_mechanics" : rospy.get_param("/prop_mechanics") # contact mechanics (static or dynamic)
 	}
+ 
+	# open = make_jt(open_dict)
+	# close = make_jt(close_dict)
 
-	# set the hand q
-	sh.set_q(hand_q)
-
-
-# /home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/sr_tactile_perception/src/../data/test.pcd
 	# log data
-	if experiment_config["prop_name"] != "sphere" and experiment_config["prop_name"] != "stanford_bunny":
-		wait_for_stable_contact(sh, hand_q)
+	# if experiment_config["prop_name"] != "sphere" and experiment_config["prop_name"] != "stanford_bunny":
+	# 	wait_for_stable_contact(sh, hand_q)
 
-	save_path = f"{os.path.dirname(__file__)}/../data/test.pcd"
-	print(save_path)
-	save_path = "/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/sr_tactile_perception/data/testing.pcd"
 	sh.record_start()
  
-	sh.record_stop(save_path=save_path)
+	rospy.sleep(2)
+
+	print(f"Number of states: {len(sequence)=}")
+
+	for i, plan in enumerate(sequence):
+		# rospy.sleep(2)
+		print(f"taking plan {i}")
+		sh.set_q(plan,1)
+	# sh.set_q(open_dict)
+	# sh.hand_commander.run_joint_trajectory_unsafe(open,wait=True)
+	# print("sleeping 2")
+	# rospy.sleep(1)
+	# sh.set_q(close_dict)
+	# sh.hand_commander.run_joint_trajectory_unsafe(close,wait=True)
+
+	# print("setting hand again - done")
+	# rospy.sleep(5)
+ 
+	# sh.hand_commander.send_stop_trajectory_unsafe()
+ 
+	sh.record_stop(save_path="/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/sr_tactile_perception/data/source_data.pcd")
 	# log_data(sh,hand_q,experiment_config)
+
+	rospy.sleep(1)
 
 	# keep_alive(rospy.get_name())
 	exit()

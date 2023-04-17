@@ -5,10 +5,10 @@
 	<arg name="model_path" default="$(find sr_tactile_perception)/../models" />
 
 	<!-- gazebo model path, where to find models -->
-	<!-- <env name="GAZEBO_PLUGIN_PATH" value="$GAZEBO_PLUGIN_PATH:/home/user/projects/shadow_robot/base/devel/lib/" /> -->
-	<!-- <env name="GAZEBO_MODEL_PATH" value="$GAZEBO_MODEL_PATH:$(arg model_path):$(find sr_description_common)/models/" /> -->
-	<!-- <env name="GAZEBO_MODEL_DATABASE_URI" value="" /> -->
-	<!-- <env name="MESH_WORKSPACE_PATH" value="$MESH_WORKSPACE_PATH:$(arg model_path):$(find sr_description_common)/models/" /> -->
+	<!-- <env name="GAZEBO_PLUGIN_PATH" value="$GAZEBO_PLUGIN_PATH:/home/user/projects/shadow_robot/base/devel/lib/" />
+	<env name="GAZEBO_MODEL_PATH" value="$GAZEBO_MODEL_PATH:$(arg model_path):$(find sr_description_common)/models/" />
+	<env name="GAZEBO_MODEL_DATABASE_URI" value="" />
+	<env name="MESH_WORKSPACE_PATH" value="$MESH_WORKSPACE_PATH:$(arg model_path):$(find sr_description_common)/models/" /> -->
 
 	<arg name="prop_name" default="cube" />
 	<arg name="prop_mechanics" default="static" />
@@ -26,8 +26,10 @@
 		if="$(eval prop_name == 'sphere')" />
 
 	<!-- stanford_bunny -->
-	<arg name="prop_pose" value="-x 0.104489 -y -0.281149 -z 0.980025 -R 0.0 -P 0.0 -Y -0.0"
+	<arg name="prop_pose" value="-x 0.054489 -y -0.301149 -z 0.960025 -R 0.0 -P 0.0 -Y -0.0"
 		if="$(eval prop_name == 'stanford_bunny')" />
+	<!-- <arg name="prop_pose" value="-x 0.054489 -y -0.301149 -z 0.980025 -R 0.0 -P 0.0 -Y -0.0" -->
+	<!-- <arg name="prop_pose" value="-x 0.104489 -y -0.281149 -z 0.980025 -R 0.0 -P 0.0 -Y -0.0" -->
 
 	<!-- push prop to parameter server -->
 	<param name="prop_name" type="string" value="$(arg prop_name)" />

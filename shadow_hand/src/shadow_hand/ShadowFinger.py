@@ -140,46 +140,71 @@ class ShadowFinger:
 
 	@property
 	def max_force(self) -> List[float]:
-		"""returns the maximum force excretable by this finger as an array of floats"""
+		"""the maximum force excretable by this finger as an array of floats. The limits in the current implementation of the firmware are from 200 to 1000 (measured in custom units)"""
 		return self.__max_force
 
 	@max_force.setter
 	def max_force(self, new_max_force: List[Optional[float]]) -> None:
 		"""sets the maximum force excretable by this finger as an array of floats"""
-		new_max_force_valid: List[float] = self.make_valid_q(new_max_force)
+		print(f"{new_max_force=}")
+		new_max_force_valid: List[float] = self.make_valid_max_force(new_max_force)
+		self.__log.info(f"{new_max_force_valid=}")
+
 		is_force_valid = all([nmf >= 200 and nmf <= 1000 for nmf in new_max_force_valid])
 		if not is_force_valid:
 			raise ValueError("the maximum force of a joint cannot exceed 1000 or go below 200 custom units")
-		for j in self.__joint_names:
-			self.__hand_commander.set_max_force(j,new_max_force_valid)
+		for i, j in enumerate(self.__joint_names):
+			self.__log.info(f"{j=} , {new_max_force_valid[i]=}")
+			self.__hand_commander.set_max_force(j,new_max_force_valid[i])
 		self.__max_force = new_max_force_valid
+
+	def make_valid_max_force(self,mf:List[Optional[float]]) -> List[float]:
+		valid_mf = []
+
+		# in this case the input is just not valid, and throw an error
+		if len(mf) > self.number_of_joints:
+			raise ValueError(f"You cannot set more joints than what the finger has. Finger: {self.__chirality}, num of joints: {self.number_of_joints}, length of given q: {len(q)}")
+
+		# if a q is given with a shorter length than number_of_joints, pad q with the joint's current values
+		elif len(mf) < self.number_of_joints:
+
+			# overwrite None values in valid_q with self.q values
+			for i,mfi in enumerate(mf):
+				valid_mf.append(mfi if mfi is not None else self.max_force[i])
+
+			# expand valid_q with self.q values
+			d_length = self.number_of_joints - len(mf)
+
+			for i in range(d_length):
+				valid_mf.append(self.max_force[len(mf) + i - 1])
+			return valid_mf
+		else:
+			return mf
 
 	def make_valid_q(self,q: List[Optional[float]]) -> List[float]:
 		"""this function converts a q into a des_q which has the correct number of elements and constants joint values for Nones in q e.g.
 		make_valid_q( [0.0, None, 0.0, pi] ) -> des_q = [0.0, current_q, 0.0, pi, current_q]
 		"""
 
-		valid_q = []
+		valid_q = q
   
 		# in this case the input is just not valid, and throw an error
 		if len(q) > self.number_of_joints:
 			raise ValueError(f"You cannot set more joints than what the finger has. Finger: {self.__chirality}, num of joints: {self.number_of_joints}, length of given q: {len(q)}")
 
 		# if a q is given with a shorter length than number_of_joints, pad q with the joint's current values
-		elif len(q) < self.number_of_joints:
-			
-			# overwrite None values in valid_q with self.q values
-			for i, qi in enumerate(q):
-				valid_q.append(qi if qi is not None else self.q[i])
-
+		if len(q) < self.number_of_joints:
 			# expand valid_q with self.q values
 			d_length = self.number_of_joints - len(q)
 
 			for i in range(d_length):
 				valid_q.append(self.q[len(q) + i - 1])
-			return valid_q
-		else:
-			return q
+
+		# overwrite None values in valid_q with self.q values
+		for i, vq in enumerate(valid_q):
+			valid_q[i] = vq if vq is not None else self.q[i]
+
+		return valid_q
 
 	def set_q(self, q: List[Optional[float]]) -> bool:
 		"""the finger's q is set in the order: tip_q, q2, ... and base_q. If a None is given for a particular angle, the angle remains constant.

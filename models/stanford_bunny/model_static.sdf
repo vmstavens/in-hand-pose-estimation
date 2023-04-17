@@ -7,7 +7,8 @@
         <geometry>
           <!-- non scaled size of bunny is 108m x 88m x 106m (LWH)-->
           <mesh>
-            <uri>model://models/stanford_bunny/meshes/stanford_bunny.dae</uri>
+            <!-- <uri>model://models/stanford_bunny/meshes/stanford_bunny.dae</uri> -->
+            <uri>file:///home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/models/stanford_bunny/meshes/stanford_bunny.dae</uri>
             <scale> 0.001 0.001 0.001 </scale>
           </mesh>
         </geometry>
@@ -15,7 +16,8 @@
       <visual name="visual">
         <geometry>
           <mesh>
-            <uri>model://models/stanford_bunny/meshes/stanford_bunny.dae</uri>
+            <uri>file:///home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/models/stanford_bunny/meshes/stanford_bunny.dae</uri>
+            <!-- <uri>model://models/stanford_bunny/meshes/stanford_bunny.dae</uri> -->
             <scale> 0.001 0.001 0.001 </scale>
           </mesh>
         </geometry>

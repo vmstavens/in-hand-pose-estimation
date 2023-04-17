@@ -11,6 +11,7 @@ from gazebo_msgs.msg import ContactState, ContactsState
 from shadow_hand.ShadowFinger import ShadowFinger
 from shadow_hand.ShadowWrist import ShadowWrist
 from ros_utils_py.pc_utils import PointCloudUtils as pcu
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 # from ros_utils_py.gazebo import gazebo
 import rosnode
 
@@ -85,6 +86,10 @@ class ShadowHand:
 		self.__recorded_tactile_point_cloud: pcu.PointCloud = pcu.PointCloud()
   
 		self.__log.success("Successfully set up connection to Shadow Dexterous Hand...")
+
+	@property
+	def hand_commander(self):
+		return self.__hand_commander
 
 	@property
 	def thumb_finger(self) -> ShadowFinger:
@@ -208,20 +213,32 @@ class ShadowHand:
 		self.__is_recording = False
 
 	def __record_tac(self, data: Optional[ContactsState]) -> None:
+		rospy.sleep(0.3)
 		"""runs every ff finger publish"""
 		# the hand is recording
 		if self.__is_recording:
 			self.__recorded_tactile_point_cloud.extend(self.tactile_point_cloud)
 		# we are done recording and want to save the data
 		elif len(self.__recorded_tactile_point_cloud) != 0 and not self.__is_recording:
-			self.__log.info(f"saving pcd file to {self.__save_path_record_tac} | {len(self.__recorded_tactile_point_cloud)=}")
-			self.__recorded_tactile_point_cloud.to_file(self.__save_path_record_tac)
+			print("saving pcd ------------------------------------------")
+			self.__recorded_tactile_point_cloud.write_pcd(self.__save_path_record_tac)
+		# 	self.__log.info(f"saving pcd file to {self.__save_path_record_tac} |\n{len(self.__recorded_tactile_point_cloud)=} |\n{self.__recorded_tactile_point_cloud.normals=}")
+
+		# 	p = self.__recorded_tactile_point_cloud.points.tolist()
+		# 	n = self.__recorded_tactile_point_cloud.normals.tolist()
+		# 	tmp_pc = pcu.PointCloud(points=p, normals=n)
+			
+		# 	tmp_pc.to_file(self.__save_path_record_tac, points=p,normals=n)
+		# 	# tmp_pc.to_file(self.__save_path_record_tac)
+		# 	print(f"{tmp_pc.o3d_pc.has_normals()=}")
+		# 	# self.__recorded_tactile_point_cloud.to_file(self.__save_path_record_tac)
+   
 			self.__recorded_tactile_point_cloud = pcu.PointCloud.empty()
 		# we have not started to record yet or have already done so
 		else:
 			return
 
-	def set_q(self,des_state: Dict[Union[ShadowFinger,ShadowWrist],List[Optional[float]]]) -> bool:
+	def set_q(self, des_state: Dict[Union[ShadowFinger, ShadowWrist], List[Optional[float]]], interpolate_time: int = 3) -> None:
 		"""sets all joint configurations as specified in the dictionary. One such example can be seen below
 
 			hand_q = {
@@ -237,24 +254,9 @@ class ShadowHand:
 			bool: if the setting succeeded
 		"""
 
-		# make des_state valid
-		valid_des_state: Dict[ShadowFinger, List[float]] = {}
-		for f in des_state:
-			valid_des_state[f] = f.make_valid_q(des_state[f])
-
-		des_joint_state = {}
-		for finger in valid_des_state.keys(): # index_finger, middle_finger, ...
-			for i, jn in enumerate(finger.joint_names):  # 0 rh_FFJ1, 1 rh_FFJ2, ...
-				des_joint_state[jn] = valid_des_state[finger][i]
-
-		try:
-			self.__log.warn(rospy.get_name() + f" attempting to set joint value...")
-			self.__hand_commander.move_to_joint_value_target(des_joint_state)
-			self.__log.success(rospy.get_name() + " succeeded...")
-			return True
-		except:
-			self.__log.error(f"failed to set joint value {valid_des_state}...")
-			return False
+		joint_trajectory = self.__make_jt(des_state, interpolate_time=interpolate_time)
+		self.__hand_commander.run_joint_trajectory_unsafe(joint_trajectory,wait=True)
+		return
 
 			# joints_states = {'rh_FFJ1': 90, 'rh_FFJ2': 90, 'rh_FFJ3': 90, 'rh_FFJ4': 0.0,
 			#            'rh_MFJ1': 90, 'rh_MFJ2': 90, 'rh_MFJ3': 90, 'rh_MFJ4': 0.0,
@@ -263,3 +265,39 @@ class ShadowHand:
 			#            'rh_THJ1': 40, 'rh_THJ2': 35, 'rh_THJ3': 0.0, 'rh_THJ4': 65, 'rh_THJ5': 15,
 			#            'rh_WRJ1': 0.0, 'rh_WRJ2': 0.0}
 			# 'rh_THJ1', 'rh_THJ2', 'rh_THJ3', 'rh_THJ4', 'rh_THJ5'
+
+	def __make_jt(self,state: Dict[Union[ShadowFinger,ShadowWrist],List], interpolate_time: int = 3) -> JointTrajectory:
+		joint_values_dict = self.__get_q_as_dict(state)
+	
+		jt = JointTrajectory()
+		all_joint_names, all_joint_values = [jn for jn, jv in joint_values_dict.items()], [jv for jn, jv in joint_values_dict.items()]
+		print(f"{all_joint_names=} | {len(all_joint_names)=}")
+		print(f"{all_joint_values=} | {len(all_joint_values)=}")
+		# jt.header.stamp = rospy.Time.now()
+		jt.header.frame_id = ''
+		jt.joint_names = all_joint_names
+
+		point = JointTrajectoryPoint()
+		point.positions = all_joint_values
+		point.velocities = []
+		point.accelerations = []
+		point.effort = []
+		point.time_from_start = rospy.Duration(secs=interpolate_time)
+		jt.points.append(point)
+
+		return jt
+
+	def __get_q_as_dict(self,des_state: Dict[Union[ShadowFinger,ShadowWrist],List[Optional[float]]]) -> Dict[str,float]:
+		# make des_state valid
+		valid_des_state: Dict[ShadowFinger, List[float]] = {}
+		for f in des_state:
+			print(f"none yoyo {des_state[f]=}")
+			valid_des_state[f] = f.make_valid_q(des_state[f])
+			print(f"yoyo {valid_des_state[f]=}")
+
+		des_joint_state = {}
+		for finger in valid_des_state.keys():  # index_finger, middle_finger, ...
+			for i, jn in enumerate(finger.joint_names):  # 0 rh_FFJ1, 1 rh_FFJ2, ...
+				des_joint_state[jn] = valid_des_state[finger][i]
+		print(f"{des_joint_state=}")
+		return des_joint_state

@@ -30,7 +30,8 @@
 	<!-- // World specific arguments ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- which model you wisht to touch (cube, sphere or pen_black) -->
-	<arg name="prop_name" default="cube" />
+	<arg name="prop_name" default="stanford_bunny" />
+	<!-- <arg name="prop_name" default="cube" /> -->
 
 	<!-- the mechanics of the prop loaded, should it be "static" or "dynamic" -->
 	<arg name="prop_mechanics" default="static" />
@@ -50,8 +51,8 @@
 	<node pkg="sr_tactile_perception" type="sr_tactile_perception.py" name="sr_tactile_perception" output="$(arg output)"/>
 
 	<!-- test node -->
-	<!-- <param name="prop_mechanics_param" type="string" value="$(arg prop_mechanics)" />
-	<node pkg="sr_tactile_perception" type="test.py" name="test" output="$(arg output)" >
+	<!-- <param name="prop_mechanics_param" type="string" value="$(arg prop_mechanics)" /> -->
+	<!-- <node pkg="sr_tactile_perception" type="test.py" name="test" output="$(arg output)" >
 		<param name="test" value="this_is_a_testing_string" type="string" />
 	</node> -->
 
