@@ -1,3 +1,7 @@
+# added
+*.pcd
+
+# rest
 *.json
 *.txt
 *.jpg

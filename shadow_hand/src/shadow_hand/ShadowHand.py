@@ -65,6 +65,9 @@ class ShadowHand:
 		# get all the joint names in the hand with the hand prefix found above (e.g. 'rh_FFJ1', 'rh_FFJ2', 'rh_FFJ3', 'rh_FFJ4', 'rh_MFJ1', 'rh_MFJ2', ...)
 		self.__joints = self.__hand_finder.get_hand_joints()[self.__hand_chirality]
 
+		# update frequency
+		self.__update_frequency = 2.0
+
 		# define fingers
 		self.__thumb_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.THUMB_FINGER, hc=self.__hand_commander)
 		self.__index_finger = ShadowFinger(finger_type=ShadowFinger.FINGERS_NAMES.INDEX_FINGER, hc=self.__hand_commander)
@@ -90,6 +93,16 @@ class ShadowHand:
 	@property
 	def hand_commander(self):
 		return self.__hand_commander
+
+	@property
+	def update_frequency(self) -> float:
+		return self.__update_frequency
+
+	@update_frequency.setter
+	def update_frequency(self, new_update_frequency) -> None:
+		self.__update_frequency = new_update_frequency
+		for f in self.fingers:
+			f.update_freq = new_update_frequency
 
 	@property
 	def thumb_finger(self) -> ShadowFinger:
@@ -213,7 +226,7 @@ class ShadowHand:
 		self.__is_recording = False
 
 	def __record_tac(self, data: Optional[ContactsState]) -> None:
-		rospy.sleep(0.3)
+		# rospy.sleep(0.05)
 		"""runs every ff finger publish"""
 		# the hand is recording
 		if self.__is_recording:
@@ -222,23 +235,13 @@ class ShadowHand:
 		elif len(self.__recorded_tactile_point_cloud) != 0 and not self.__is_recording:
 			print("saving pcd ------------------------------------------")
 			self.__recorded_tactile_point_cloud.write_pcd(self.__save_path_record_tac)
-		# 	self.__log.info(f"saving pcd file to {self.__save_path_record_tac} |\n{len(self.__recorded_tactile_point_cloud)=} |\n{self.__recorded_tactile_point_cloud.normals=}")
-
-		# 	p = self.__recorded_tactile_point_cloud.points.tolist()
-		# 	n = self.__recorded_tactile_point_cloud.normals.tolist()
-		# 	tmp_pc = pcu.PointCloud(points=p, normals=n)
-			
-		# 	tmp_pc.to_file(self.__save_path_record_tac, points=p,normals=n)
-		# 	# tmp_pc.to_file(self.__save_path_record_tac)
-		# 	print(f"{tmp_pc.o3d_pc.has_normals()=}")
-		# 	# self.__recorded_tactile_point_cloud.to_file(self.__save_path_record_tac)
    
 			self.__recorded_tactile_point_cloud = pcu.PointCloud.empty()
 		# we have not started to record yet or have already done so
 		else:
 			return
 
-	def set_q(self, des_state: Dict[Union[ShadowFinger, ShadowWrist], List[Optional[float]]], interpolate_time: int = 3) -> None:
+	def set_q(self, des_state: Dict[Union[ShadowFinger, ShadowWrist], List[Optional[float]]], interpolation_time: int = 1,block: bool = False) -> None:
 		"""sets all joint configurations as specified in the dictionary. One such example can be seen below
 
 			hand_q = {
@@ -249,31 +252,28 @@ class ShadowHand:
 				sh.little_finger : [0.0, 0.0, π/2.0],
 				sh.wrist         : [0.0, 0.0]
 			}
-			if you want certain joints unchanged, simply leave a None
+			if you want certain joints unchanged, simply leave a None. The interpolation time is in seconds and block is rather or not the operation should be blocking for the program.
 		Returns:
 			bool: if the setting succeeded
 		"""
-
-		joint_trajectory = self.__make_jt(des_state, interpolate_time=interpolate_time)
-		self.__hand_commander.run_joint_trajectory_unsafe(joint_trajectory,wait=True)
+		joint_trajectory = self.__make_jt(des_state, interpolation_time=interpolation_time)
+		self.__hand_commander.run_joint_trajectory_unsafe(joint_trajectory,wait=block)
 		return
 
-			# joints_states = {'rh_FFJ1': 90, 'rh_FFJ2': 90, 'rh_FFJ3': 90, 'rh_FFJ4': 0.0,
-			#            'rh_MFJ1': 90, 'rh_MFJ2': 90, 'rh_MFJ3': 90, 'rh_MFJ4': 0.0,
-			#            'rh_RFJ1': 90, 'rh_RFJ2': 90, 'rh_RFJ3': 90, 'rh_RFJ4': 0.0,
-			#            'rh_LFJ1': 90, 'rh_LFJ2': 90, 'rh_LFJ3': 90, 'rh_LFJ4': 0.0, 'rh_LFJ5': 0.0,
-			#            'rh_THJ1': 40, 'rh_THJ2': 35, 'rh_THJ3': 0.0, 'rh_THJ4': 65, 'rh_THJ5': 15,
-			#            'rh_WRJ1': 0.0, 'rh_WRJ2': 0.0}
-			# 'rh_THJ1', 'rh_THJ2', 'rh_THJ3', 'rh_THJ4', 'rh_THJ5'
+		# joints_states = {'rh_FFJ1': 90, 'rh_FFJ2': 90, 'rh_FFJ3': 90, 'rh_FFJ4': 0.0,
+		#            'rh_MFJ1': 90, 'rh_MFJ2': 90, 'rh_MFJ3': 90, 'rh_MFJ4': 0.0,
+		#            'rh_RFJ1': 90, 'rh_RFJ2': 90, 'rh_RFJ3': 90, 'rh_RFJ4': 0.0,
+		#            'rh_LFJ1': 90, 'rh_LFJ2': 90, 'rh_LFJ3': 90, 'rh_LFJ4': 0.0, 'rh_LFJ5': 0.0,
+		#            'rh_THJ1': 40, 'rh_THJ2': 35, 'rh_THJ3': 0.0, 'rh_THJ4': 65, 'rh_THJ5': 15,
+		#            'rh_WRJ1': 0.0, 'rh_WRJ2': 0.0}
+		# 'rh_THJ1', 'rh_THJ2', 'rh_THJ3', 'rh_THJ4', 'rh_THJ5'
 
-	def __make_jt(self,state: Dict[Union[ShadowFinger,ShadowWrist],List], interpolate_time: int = 3) -> JointTrajectory:
+	def __make_jt(self,state: Dict[Union[ShadowFinger,ShadowWrist],List], interpolation_time: int = 3) -> JointTrajectory:
 		joint_values_dict = self.__get_q_as_dict(state)
 	
 		jt = JointTrajectory()
-		all_joint_names, all_joint_values = [jn for jn, jv in joint_values_dict.items()], [jv for jn, jv in joint_values_dict.items()]
-		print(f"{all_joint_names=} | {len(all_joint_names)=}")
-		print(f"{all_joint_values=} | {len(all_joint_values)=}")
-		# jt.header.stamp = rospy.Time.now()
+		all_joint_names = [jn for jn, jv in joint_values_dict.items()] 
+		all_joint_values = [jv for jn, jv in joint_values_dict.items()]
 		jt.header.frame_id = ''
 		jt.joint_names = all_joint_names
 
@@ -282,7 +282,7 @@ class ShadowHand:
 		point.velocities = []
 		point.accelerations = []
 		point.effort = []
-		point.time_from_start = rospy.Duration(secs=interpolate_time)
+		point.time_from_start = rospy.Duration(secs=interpolation_time)
 		jt.points.append(point)
 
 		return jt
@@ -291,13 +291,10 @@ class ShadowHand:
 		# make des_state valid
 		valid_des_state: Dict[ShadowFinger, List[float]] = {}
 		for f in des_state:
-			print(f"none yoyo {des_state[f]=}")
 			valid_des_state[f] = f.make_valid_q(des_state[f])
-			print(f"yoyo {valid_des_state[f]=}")
 
 		des_joint_state = {}
 		for finger in valid_des_state.keys():  # index_finger, middle_finger, ...
 			for i, jn in enumerate(finger.joint_names):  # 0 rh_FFJ1, 1 rh_FFJ2, ...
 				des_joint_state[jn] = valid_des_state[finger][i]
-		print(f"{des_joint_state=}")
 		return des_joint_state

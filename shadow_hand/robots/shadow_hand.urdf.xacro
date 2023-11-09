@@ -51,52 +51,14 @@
 		</plugin>
 	</gazebo> -->
 
-
-	<!-- ... new group state which uses shadow_finger xacros ......................................................... -->
-
-	<!-- <xacro:arg name="robot_name" default="shadowhand_motor" />
-	<xacro:arg name="hand_name" default="right_hand" />
-	<xacro:arg name="prefix" default="rh_" />
-	<xacro:arg name="ff" default="1" />
-	<xacro:arg name="mf" default="1" />
-	<xacro:arg name="rf" default="1" />
-	<xacro:arg name="lf" default="1" />
-	<xacro:arg name="th" default="1" />
-	<xacro:arg name="is_lite" default="0" />
-	<xacro:arg name="is_biotac" default="0" />  
-
-	<group_state name="pack2" group="$(arg hand_name)">
-		<xacro:if value="$(arg th)">
-			<xacro:thumb_curl prefix="$(arg prefix)" is_biotac="$(arg is_biotac)" />
-		</xacro:if>
-		<xacro:if value="$(arg ff)">
-			<xacro:finger_curl prefix="$(arg prefix)" joint_prefix="FF" lf="0"
-				is_biotac="$(arg is_biotac)" />
-		</xacro:if>
-		<xacro:if value="$(arg mf)">
-			<xacro:finger_curl prefix="$(arg prefix)" joint_prefix="MF" lf="0"
-				is_biotac="$(arg is_biotac)" />
-		</xacro:if>
-		<xacro:if value="$(arg rf)">
-			<xacro:finger_curl prefix="$(arg prefix)" joint_prefix="RF" lf="0"
-				is_biotac="$(arg is_biotac)" />
-		</xacro:if>
-		<xacro:unless value="$(arg is_lite)">
-			<xacro:if value="$(arg lf)">
-				<xacro:finger_curl prefix="$(arg prefix)" joint_prefix="LF" lf="1"
-					is_biotac="$(arg is_biotac)" />
-			</xacro:if>
-			<joint name="$(arg prefix)WRJ1" value="0" />
-			<joint name="$(arg prefix)WRJ2" value="0" />
-		</xacro:unless>
-	</group_state> -->
-
-	<gazebo>
-		<plugin filename="libsim_biotac.so" name="sim_biotac">
+	<!-- <gazebo>
+		<plugin filename="libbiotac_sim_lib.so" name="biotac_sim">
 			<alwaysOn>true</alwaysOn>
 			<updateRate>100.0</updateRate>
-			<!-- <updateRate>100.0</updateRate> -->
 		</plugin>
-	</gazebo>
+	</gazebo> -->
 
 </robot>
+
+<!-- [Err] [Plugin.hh:212] Failed to load plugin libsim_biotac.so: libsim_biotac.so: cannot open shared object file: No such file or directory -->
+<!-- libbiotac_sim_lib.so -->

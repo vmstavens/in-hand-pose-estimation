@@ -11,6 +11,7 @@ from ros_utils_py.log import Logger
 from ros_utils_py.pc_utils import PointCloudUtils as pcu
 from ros_utils_py.geometry import geometry as geo
 from ros_utils_py.utils import COLORS_RGBA, COLOR
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 import numpy as np
 from math import sqrt
@@ -32,18 +33,18 @@ class ShadowFinger:
 		# logger
 		self.__log = Logger()
   
-		self.__hand_commander: SrHandCommander = hc
-		self.__update_freq: float = update_freq
-		self.__finger_type: str = finger_type
-		self.__chirality: str = chirality
-		self.__tac_topic: str = f"/contacts/{chirality}_{finger_type}/distal"
+		self.__hand_commander: SrHandCommander           = hc
+		self.__update_freq: float                        = update_freq
+		self.__finger_type: str                          = finger_type
+		self.__chirality: str                            = chirality
+		self.__tac_topic: str                            = f"/contacts/{chirality}_{finger_type}/distal"
 		self.__contact_states_sample: List[ContactState] = []
-		self.__contact_state: Optional[ContactState] = ContactState()
-		self.__CONTACT_STATES_SAMPLE_THRESHOLD = 11 # with the plugin publishing at ~100 Hz, 11 is about once every 10 ms or 10 times pr. second
-		self.__SAME_POINT_DISTANCE_THRESHOLD = 0.0002  # m i.e. 0.2 mm
-		self.__contact_state_sanitized = ContactState()
-		self.__name: str = f"{self.__chirality}_{self.__finger_type.upper()}"
-		self.__tactile_point_cloud: pcu.PointCloud = pcu.PointCloud()
+		self.__contact_state: Optional[ContactState]     = ContactState()
+		self.__CONTACT_STATES_SAMPLE_THRESHOLD           = 11 # with the plugin publishing at ~100 Hz, 11 is about once every 10 ms or 10 times pr. second
+		self.__SAME_POINT_DISTANCE_THRESHOLD             = 0.0002  # m i.e. 0.2 mm
+		self.__contact_state_sanitized                   = ContactState()
+		self.__name: str                                 = f"{self.__chirality}_{self.__finger_type.upper()}"
+		self.__tactile_point_cloud: pcu.PointCloud       = pcu.PointCloud()
 
 		# look up table for colors depending on finger type
 		self.__fingers_and_colors: Dict[str, COLOR] = {
@@ -62,7 +63,7 @@ class ShadowFinger:
 		# set the number of joints in the finger
 		self.__num_of_joints = self.__fingers_and_num_of_joints[self.__finger_type.upper()]
 
-		# there are 4 joint, in range the last number is exclusive
+		# there are 4 joint, in range the last number is exclusive. for example ["rh_FFJ1", "rh_FFJ2", "rh_FFJ3", ... ]
 		self.__joint_names = [ f"{self.__chirality}_{self.__finger_type.upper()}J{i}" for i in range(1,self.__num_of_joints + 1) ] 
   
 		# subscribe and print the found contacts
@@ -102,6 +103,11 @@ class ShadowFinger:
 	def update_freq(self) -> float:
 		"""get the tactile data update frequency in Hz"""
 		return self.__update_freq
+
+	@update_freq.setter
+	def update_freq(self, new_update_freq: float) -> None:
+		"""get the tactile data update frequency in Hz"""
+		self.__update_freq = new_update_freq
 
 	@property
 	def tac_type(self) -> str:
@@ -146,7 +152,6 @@ class ShadowFinger:
 	@max_force.setter
 	def max_force(self, new_max_force: List[Optional[float]]) -> None:
 		"""sets the maximum force excretable by this finger as an array of floats"""
-		print(f"{new_max_force=}")
 		new_max_force_valid: List[float] = self.make_valid_max_force(new_max_force)
 		self.__log.info(f"{new_max_force_valid=}")
 
@@ -157,6 +162,14 @@ class ShadowFinger:
 			self.__log.info(f"{j=} , {new_max_force_valid[i]=}")
 			self.__hand_commander.set_max_force(j,new_max_force_valid[i])
 		self.__max_force = new_max_force_valid
+
+	@property
+	def contact_states_sample_threshold(self):
+		return self.__CONTACT_STATES_SAMPLE_THRESHOLD
+
+	@contact_states_sample_threshold.setter
+	def contact_states_sample_threshold(self, new_threshold: int) -> None:
+		self.__CONTACT_STATES_SAMPLE_THRESHOLD = new_threshold
 
 	def make_valid_max_force(self,mf:List[Optional[float]]) -> List[float]:
 		valid_mf = []
@@ -186,19 +199,18 @@ class ShadowFinger:
 		make_valid_q( [0.0, None, 0.0, pi] ) -> des_q = [0.0, current_q, 0.0, pi, current_q]
 		"""
 
-		valid_q = q
+		valid_q = [qi for qi in q]
   
 		# in this case the input is just not valid, and throw an error
 		if len(q) > self.number_of_joints:
-			raise ValueError(f"You cannot set more joints than what the finger has. Finger: {self.__chirality}, num of joints: {self.number_of_joints}, length of given q: {len(q)}")
+			raise ValueError(f"You cannot set more joints than what the finger has. Finger: {self.__name}, num of joints: {self.number_of_joints}, length of given q: {len(q)}")
 
 		# if a q is given with a shorter length than number_of_joints, pad q with the joint's current values
 		if len(q) < self.number_of_joints:
 			# expand valid_q with self.q values
 			d_length = self.number_of_joints - len(q)
-
 			for i in range(d_length):
-				valid_q.append(self.q[len(q) + i - 1])
+				valid_q.append(self.q[len(valid_q)])
 
 		# overwrite None values in valid_q with self.q values
 		for i, vq in enumerate(valid_q):
@@ -206,25 +218,18 @@ class ShadowFinger:
 
 		return valid_q
 
-	def set_q(self, q: List[Optional[float]]) -> bool:
+	def set_q(self, q: List[Optional[float]], interpolate_time:int = 1, block:bool = False) -> bool:
 		"""the finger's q is set in the order: tip_q, q2, ... and base_q. If a None is given for a particular angle, the angle remains constant.
 		Returns:
 			bool: did the set function succeed
 		"""
 
-		valid_q = self.make_valid_q(q)
-  
-		# create the joint dictionary
-		q_dict = dict(zip(self.__joint_names, valid_q))
-  
-		# check if the dictionary has any None, if they do, replace it with the joint's current value
-		for key in q_dict.keys():
-			if q_dict[key] is None:
-				q_dict[key] = self.q[self.joint_names.index(key)]
-  
+		joint_trajectory = self.__make_jt(q,interpolation_time=interpolate_time)
+
 		try:
-			self.__log.warn(rospy.get_name() + f" attempting to set {self.name} joint values {valid_q}...")
-			self.__hand_commander.move_to_joint_value_target(q_dict)
+			self.__log.warn(rospy.get_name() + f" attempting to set {self.name} joint values {self.make_valid_q(q)}")
+			# self.__hand_commander.run_joint_trajectory(joint_trajectory=joint_trajectory)
+			self.__hand_commander.run_joint_trajectory_unsafe(joint_trajectory=joint_trajectory,wait=block)
 			self.__log.success(rospy.get_name() + " succeeded...")
 			return True
 		except:
@@ -249,7 +254,11 @@ class ShadowFinger:
 				return None
 
 			self.__log.warn("awaiting contact points...")
-			time.sleep(1.0 / self.__update_freq)
+			if (self.__update_freq == 0): 
+				continue 
+			else:
+				time.sleep(1.0 / self.__update_freq)
+
 			continue
 
 		return self.contact_state
@@ -311,7 +320,7 @@ class ShadowFinger:
 		N: Optional[List[Vector3]] = self.__contact_state.contact_normals
 
 		# depths
-		D: List[float]   = self.__contact_state.depths
+		D: List[float] = self.__contact_state.depths
 
 		# displaced tactile point cloud, the values above (P, N and D) are just used to make the line below more readable...
 		self.__tactile_point_cloud.points = np.array([(p.x + (-N[i].x * D[i]), p.y + (-N[i].y * D[i]), p.z + (-N[i].z * D[i])) for i, p in enumerate(P)])
@@ -338,6 +347,11 @@ class ShadowFinger:
 
 		# return if no data is received yet
 		if len(data.states) == 0: return
+
+		# if the update frequency is set to 0
+		# if (self.__update_freq == 0):
+		# 	self.__contact_state_sanitized = self.__contact_state
+		# 	self.__
 
 		# when we have filled up the array with "self.__contact_state_sample_size" elements
 		if len(self.__contact_states_sample) >= self.__CONTACT_STATES_SAMPLE_THRESHOLD:
@@ -499,3 +513,28 @@ class ShadowFinger:
 			best_cs.wrenches[i].torque = __tuple2vec(new_torque)
 
 		return best_cs
+
+	def __make_jt(self, q: List[Optional[float]], interpolation_time: int = 1) -> JointTrajectory:
+     
+		# 1) get all joint names in a dict
+		hand_state = self.__hand_commander.get_current_state()
+
+		valid_q = self.make_valid_q(q)
+		for i, jn in enumerate(self.joint_names):
+			hand_state[jn] = valid_q[i]
+  
+		all_joint_names = [jn for jn, jv in hand_state.items()]
+		all_joint_values = [jv for jn, jv in hand_state.items()]
+		
+		jt = JointTrajectory()
+		jt.header.frame_id = ''
+		jt.joint_names = all_joint_names
+  
+		point = JointTrajectoryPoint()
+		point.positions = all_joint_values
+		point.velocities = []
+		point.accelerations = []
+		point.effort = []
+		point.time_from_start = rospy.Duration(secs=interpolation_time)
+		jt.points.append(point)
+		return jt

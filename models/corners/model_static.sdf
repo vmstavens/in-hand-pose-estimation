@@ -1,0 +1,156 @@
+<sdf version='1.6'>
+<model name='corners'>
+<static>true</static>
+
+<!-- 45 deg = 0.785398163 radians -->
+<!-- -0.000475 -0.321065 1.032582 -->
+		<!-- base cube -->
+<link name='cube1'>
+	<pose>0 0 0 -0.235917 0.846902 -1.051349</pose>
+	<!-- <pose>0 0 0.1 -0.235917 0.846902 -1.051349</pose> -->
+	<collision name='base_collision'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+	</collision>
+	<visual name='base_visual'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+		<material>
+			<script>
+				<uri>file://media/materials/scripts/gazebo.material</uri>
+			</script>
+		</material>
+	</visual>
+</link>
+		<!-- cube 2 -->
+<link name='cube2'>
+	<pose>0.02 0 0 -0.235917 0.846902 -1.051349</pose>
+	<collision name='base_collision'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+	</collision>
+	<visual name='base_visual'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+		<material>
+			<script>
+				<uri>file://media/materials/scripts/gazebo.material</uri>
+			</script>
+		</material>
+	</visual>
+</link>
+		<!-- cube 3 -->
+<link name='cube3'>
+	<pose>0.045 0 0 -0.235917 0.846902 -1.051349</pose>
+	<collision name='base_collision'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+	</collision>
+	<visual name='base_visual'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+		<material>
+			<script>
+				<uri>file://media/materials/scripts/gazebo.material</uri>
+			</script>
+		</material>
+	</visual>
+</link>
+		<!-- cube 4 -->
+<link name='cube4'>
+	<pose>0.065 0 0 -0.235917 0.846902 -1.051349</pose>
+	<collision name='base_collision'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+	</collision>
+	<visual name='base_visual'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+		<material>
+			<script>
+				<uri>file://media/materials/scripts/gazebo.material</uri>
+			</script>
+		</material>
+	</visual>
+</link>
+
+
+
+	</model>
+</sdf>
+<!-- cube 3 -->
+<!-- <link name='cube3'>
+	<pose>0.2 0 0 0 0 0</pose>
+	<collision name='base_collision'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+	</collision>
+	<visual name='base_visual'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+		<material>
+			<script>
+				<uri>file://media/materials/scripts/gazebo.material</uri>
+			</script>
+		</material>
+	</visual>
+</link> -->
+<!-- cube 4 -->
+<!-- <link name='cube4'>
+	<pose>0.2 0 0 0 0 0</pose>
+	<collision name='base_collision'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+	</collision>
+	<visual name='base_visual'>
+		<geometry>
+			<box>
+				<size>0.01 0.01 0.01</size>
+			</box>
+		</geometry>
+		<material>
+			<script>
+				<uri>file://media/materials/scripts/gazebo.material</uri>
+			</script>
+		</material>
+	</visual>
+</link> -->
+
+
+<!-- rpy = -0.235917 0.846902 -1.051349 -->
+<!-- r = -0.235917 -->
+<!-- p = 0.846902 -->
+<!-- y = -1.051349 -->

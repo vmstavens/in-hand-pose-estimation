@@ -6,7 +6,7 @@ from ros_utils_py.utils import keep_alive
 from ros_utils_py.log import Logger
 import time
 from shadow_hand import ShadowHand
-import math
+import math as m
 
 def main() -> None:
 
@@ -15,8 +15,10 @@ def main() -> None:
 	rospy.loginfo(f"waiting {waiting_time} for hand to start...")
 	time.sleep(waiting_time)
 
-	# # joint configuration, from base to tip (does this make contact with the pen? yes)
-	q: list = [0.0, 0.0, math.pi / 2.0]
+	# joint configuration, from base to tip (does this make contact with the pen? yes)
+	q: list = [0.0, m.pi, m.pi/2.0]
+	
+	# q: list = [0.0, m.pi / 2.0, 0.0]
 
 	# create shadow hand object
 	sh = ShadowHand()
@@ -27,14 +29,16 @@ def main() -> None:
 	# init logger and directory
 	log = Logger()
  
+ 
 	# print tactile information when available
-	# while (True):
-	# 	time.sleep(1)
+	while (True):
+		time.sleep(1)
+		log.warn(str(sh.index_finger.q))
 		
-		# if sh.index_finger.is_in_contact:
-		# 	log.info(f"contact point coordinates: {sh.index_finger.contact_state}")
-		# else:
-		# 	log.info("waiting for contacts...")
+		if sh.index_finger.is_in_contact:
+			log.info(f"contact point coordinates: {sh.index_finger.contact_state}")
+		else:
+			log.info("waiting for contacts...")
 	keep_alive(rospy.get_name())
 
 if __name__ == '__main__':

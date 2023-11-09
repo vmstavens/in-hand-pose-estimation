@@ -15,8 +15,11 @@
 	<arg name="hand" default="true" />
 	<!-- biotac -->
 	<arg name="biotac" default="true" />
-	<arg if="$(arg biotac)" name="tip_sensors" value="bt_sp" />
+	
+	<arg if="$(arg biotac)" name="tip_sensors" value="bt_2p" />
+	<!-- <arg if="$(arg biotac)" name="tip_sensors" value="bt_sp" /> -->
 	<arg unless="$(arg biotac)" name="tip_sensors" default="th=pst,ff=pst,mf=pst,rf=pst,lf=pst" />
+
 	<!-- start in home pose, since we are setting a new pose, this is false -->
 	<arg name="start_home" default="false" />
 	<!-- load the biotac_sim_lib plugin -->
@@ -30,11 +33,16 @@
 	<arg name="model_path" default="$(find shadow_hand)/../models/" />
 	<!-- which model you wisht to touch (cube, sphere or pen_black) -->
 	<arg name="prop" default="cube" />
+
 	<!-- the pose of the  -->
+	<!-- <arg name="prop_pose" default="-x 0.086821 -y -0.281485 -z 1.007564 -R 0.0 -P 0.0 -Y 0.0" /> -->
 	<arg name="prop_pose" default="-x 0.134796 -y -0.281485 -z 0.991616 -R 0.0 -P 0.0 -Y 0.0" />
 	<!-- spawn the prop -->
-	<node name="spawn_prop" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-file $(arg model_path)$(arg prop)/model_static.sdf -sdf $(arg prop_pose) -model $(arg prop)" />
-
+	<!-- <group if="$(arg path_planned)"></group> -->
+	<!-- if="$(eval arg('cond_1) or arg('cond_2'))" -->
+	<group unless="$(eval arg('prop') == 'False')">
+		<node name="spawn_prop" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-file $(arg model_path)$(arg prop)/model_static.sdf -sdf $(arg prop_pose) -model $(arg prop)"/>
+	</group>
 	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- finger_control_demo node -->
@@ -64,6 +72,7 @@
 	<!-- // Load in world ///////////////////////////////////////////////////////////////////////// -->
 
 	<arg name="world_name" value="$(find shadow_hand)/../worlds/in_hand_pose_estimation.world" />
+	<!-- <arg name="world_name" value="/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/worlds/in_hand_pose_estimation.world" /> -->
 
 	<include file="$(find gazebo_ros)/launch/empty_world.launch">
 		<arg name="world_name" value="$(arg world_name)" />

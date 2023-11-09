@@ -3,7 +3,7 @@ import json
 import math
 from datetime import datetime
 from random import random
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Tuple
 
 import rospy
 from gazebo_msgs.msg import ContactState, ModelState
@@ -18,7 +18,9 @@ from dynamic_reconfigure.client import Client
 import os
 import numpy as np
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-
+import json
+import time
+import pandas as pd
 # init logger
 log = Logger()
 
@@ -28,6 +30,38 @@ log = Logger()
 # 	log.info(f"{sh.contact_states}")
 # 	pub.publish(sh.tactile_point_cloud)
 
+class Data(object):
+	"""protected property demo"""
+
+	def __init__(self, sh, data={}, i=0):
+			self._data = data
+			self._i = i
+			self._sh = sh
+	#
+	@property
+	def data(self):
+		return self._data
+
+	@property
+	def i(self):
+		return self._i
+
+	@property
+	def sh(self):
+		return self._sh
+	#
+
+	@data.setter
+	def data(self, value):
+		self._data = value
+
+	@i.setter
+	def i(self, value):
+		self._i = value
+
+	@sh.setter
+	def sh(self, value):
+		self._sh = value
 
 def main() -> None:
 
@@ -37,49 +71,105 @@ def main() -> None:
 	# create shadow hand object
 	sh: ShadowHand = ShadowHand()
 
+	sh.record_start()
+
+	sh.update_frequency = 0.0
+ 
+	plan = make_probe_plan(sh)
+ 
+	I: int = 0
+	for p in plan:
+		print(f"{I=}")
+		sh.set_q(p,interpolation_time=3,block=True)
+		I += 1
+
+	date_time = datetime.fromtimestamp(datetime.timestamp(datetime.now()))
+	str_date_time = date_time.strftime("%Y%m%d_%H%M%S")
+	sh.record_stop("/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/sr_tactile_perception/data/post-thesis-tests/" + str_date_time + ".pcd")
+
+	rospy.sleep(4)
+
+	exit()
+ 
+ 
+def append_data(data: Dict, i: int, sh: ShadowHand) -> Dict:
+	# initiate
+	data[f"t{i}"] = {}
+
+	for f in sh.fingers:
+
+		# contains the angle errors
+		normals, forces, torques, contact_points = {}, {}, {}, {}
+
+		# compute the angle errors
+		for j, n in enumerate(f.contact_state.contact_normals):
+			normals[f"n{j}"] = [n.x, n.y, n.z]
+			forces[f"f{j}"] = [f.contact_state.wrenches[j].force.x, f.contact_state.wrenches[j].force.y, f.contact_state.wrenches[j].force.z]
+			torques[f"tau{j}"] = [f.contact_state.wrenches[j].torque.x, f.contact_state.wrenches[j].torque.y, f.contact_state.wrenches[j].torque.z]
+			contact_points[f"contact_point{j}"] = [f.contact_state.contact_positions[j].x, f.contact_state.contact_positions[j].y, f.contact_state.contact_positions[j].z]
+
+			# fill time step dict
+			data[f"t{i}"][f.name] = {
+				"nc": len(f.contact_state.contact_normals),
+				"normals": normals,
+				"forces": forces,
+				"torques": torques,
+				"contact_points": contact_points
+			}
+   
+	return data
+
+def make_probe_plan(sh: ShadowHand) -> List[Dict] :
 	# joint configuration, from base to tip (does this make contact with the pen? yes)
-	open_q: List  = [0.0, 0.0, math.pi / 2]
-	close_q: List = [math.pi / 4, math.pi / 4, math.pi / 4]
+	open_q: List = [0.0, 0.0, math.pi/2.3]
+	close_q: List = [math.pi / 3, math.pi / 3, math.pi / 3]
 
 	sequence: List[Dict] = []
- 
+
 	sequence.append({
-		sh.index_finger: open_q,
-		sh.middle_finger: open_q,
-		sh.ring_finger: open_q,
-		sh.little_finger: open_q,
+		sh.index_finger: [0.0, math.pi / 4, math.pi/4, -math.pi / 4],
+		sh.middle_finger: [0.0, math.pi / 4, math.pi/4, -math.pi / 12],
+		sh.ring_finger: [0.0, math.pi / 4, math.pi/4, -math.pi / 12],
+		sh.little_finger: [0.0, math.pi / 4, math.pi/4, -math.pi / 4],
 	})
 
 	wrist_2_min_max = (-0.489, 0.174)
 	wrist_1_min_max = (-0.698, 0.489)
 
-	print(f"curve interval {wrist_2_min_max[1]=} | {wrist_2_min_max[0]=} | {0.1 * ( wrist_2_min_max[1] - wrist_2_min_max[0] )=} ------------------------------------------------------------------")
+	print(f"curve interval {wrist_2_min_max[1]=} | {wrist_2_min_max[0]=} | {0.5 * ( wrist_2_min_max[1] - wrist_2_min_max[0] )=} ------------------------------------------------------------------")
 
-	# dphi = math.pi / 8
-	phi = 0.0
-	dphi = math.pi / 256
+	dphi = math.pi / 32
 
 	# generate sequence
-	for theta in np.arange( wrist_2_min_max[1], wrist_2_min_max[0],  - 0.1 * ( wrist_2_min_max[1] - wrist_2_min_max[0] ) ):
-		phi_q = [0.0, math.pi/16.0, None]
-		# phi += theta
-		# sequence.append({
-		# 	sh.index_finger  : phi_q,
-		# 	sh.middle_finger : phi_q,
-		# 	sh.ring_finger   : phi_q,
-		# 	sh.little_finger : phi_q ,
-		# })
+	for theta in np.arange(wrist_2_min_max[1], wrist_2_min_max[0] / 2.0,  - 0.2 * (wrist_2_min_max[1] - wrist_2_min_max[0])):
 		sequence.append({
-			sh.index_finger: phi_q,
-			sh.middle_finger: phi_q,
-			sh.ring_finger: phi_q,
-			sh.little_finger: phi_q,
+			sh.index_finger:  [0.0, dphi, math.pi/2.2, -math.pi / 4],
+			sh.middle_finger: [0.0, dphi, math.pi/2.2, -math.pi / 12],
+			sh.ring_finger:   [0.0, dphi, math.pi/2.2, -math.pi / 12],
+			sh.little_finger: [0.0, dphi, math.pi/2.2, -math.pi / 4],
+			sh.wrist:         [theta, 0.0]
 		})
-		sequence.append({sh.wrist : [theta, 0.0]})
-		sequence.append({sh.wrist : [theta, wrist_1_min_max[0] + 0.2]})
-		sequence.append({sh.wrist : [theta, wrist_1_min_max[1]]})
+		# sequence.append({sh.wrist : [theta]})
+		# sequence.append({sh.wrist : [theta, wrist_1_min_max[1]]})
+		sequence.append({sh.wrist: [theta, wrist_1_min_max[0] + 0.4]})
+		sequence.append({sh.wrist: [theta, wrist_1_min_max[1] - 0.2]})
 
-		phi_q[1] += dphi
+		# dphi = dphi + math.pi / 32
+		dphi = dphi + math.pi / 16
+
+	sequence.append({
+		sh.index_finger: close_q,
+		sh.middle_finger: close_q,
+		sh.ring_finger: close_q,
+		sh.little_finger:close_q,
+		sh.wrist: [-math.pi/3],
+	})
+ 
+	# sequence.append({})
+
+	# print(" /////// SEQUENCE LENGTHS //////////////")
+	# for s in sequence:
+	# 	print(f" {[f.name for f in s.keys()]} {[len(l) for l in s.values()]=}")
 
 	# close_dict = {
 	# 	sh.index_finger:  close_q,
@@ -89,54 +179,9 @@ def main() -> None:
 	# 	sh.wrist        : [1.0]
 	# }
 
-	experiment_config = {
-		"num_of_dp"      : 100,                                  # number of data points
-		"v_ref"          : [0.0, 1.0, 0.0],                      # the reference vector for error calc
-		"dt"             : 0.5,                                  # the time between data collection
-		"prop_name"      : rospy.get_param("/prop_name"),             # prop we are testing on
-		"prop_mechanics" : rospy.get_param("/prop_mechanics") # contact mechanics (static or dynamic)
-	}
- 
-	# open = make_jt(open_dict)
-	# close = make_jt(close_dict)
-
-	# log data
-	# if experiment_config["prop_name"] != "sphere" and experiment_config["prop_name"] != "stanford_bunny":
-	# 	wait_for_stable_contact(sh, hand_q)
-
-	sh.record_start()
- 
-	rospy.sleep(2)
-
-	print(f"Number of states: {len(sequence)=}")
-
-	for i, plan in enumerate(sequence):
-		# rospy.sleep(2)
-		print(f"taking plan {i}")
-		sh.set_q(plan,1)
-	# sh.set_q(open_dict)
-	# sh.hand_commander.run_joint_trajectory_unsafe(open,wait=True)
-	# print("sleeping 2")
-	# rospy.sleep(1)
-	# sh.set_q(close_dict)
-	# sh.hand_commander.run_joint_trajectory_unsafe(close,wait=True)
-
-	# print("setting hand again - done")
-	# rospy.sleep(5)
- 
-	# sh.hand_commander.send_stop_trajectory_unsafe()
- 
-	sh.record_stop(save_path="/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/sr_tactile_perception/data/source_data.pcd")
-	# log_data(sh,hand_q,experiment_config)
-
-	rospy.sleep(1)
-
-	# keep_alive(rospy.get_name())
-	exit()
- 
+	return sequence
 
 def log_data(sh: ShadowHand, fingers: Dict, experiment_config: Dict) -> None:
-
 
 	DESIRED_NUMBER_OF_DATA_POINTS = experiment_config["num_of_dp"]
 	SAMPLING_DT                   = experiment_config["dt"]
@@ -188,7 +233,6 @@ def log_data(sh: ShadowHand, fingers: Dict, experiment_config: Dict) -> None:
 	json.dump(json_data, log_file, indent=4)
 	log.success("Successfully saved tactile data")
 	exit()
-
 
 def wait_for_stable_contact(sh: ShadowHand, q: Dict) -> bool:
 	# wait for the fingers to make contact
