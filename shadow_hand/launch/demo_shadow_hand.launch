@@ -13,17 +13,17 @@
 
 	<!-- use hand in simulation -->
 	<arg name="hand" default="true" />
-	<!-- biotac -->
-	<arg name="biotac" default="true" />
-	
-	<arg if="$(arg biotac)" name="tip_sensors" value="bt_2p" />
-	<!-- <arg if="$(arg biotac)" name="tip_sensors" value="bt_sp" /> -->
-	<arg unless="$(arg biotac)" name="tip_sensors" default="th=pst,ff=pst,mf=pst,rf=pst,lf=pst" />
+
+	<!-- the type of tactile sensor you want to use (pst, bt_sp, bt_2p) -->
+	<arg name="tac_sensors" default="pst" />
 
 	<!-- start in home pose, since we are setting a new pose, this is false -->
 	<arg name="start_home" default="false" />
+
 	<!-- load the biotac_sim_lib plugin -->
-	<arg name="biotac_sim" default="true" />
+
+	<arg name="biotac_sim" default="false" />
+	<arg if="$(eval arg('tac_sensors') == 'bt_2p')" name="biotac_sim" value="true" />
 	<!-- position of the hand's spawn point. Orientation of the hand's spawn point, measured radians in WORLD Roll-Pitch-Yaw (1.57 = pi/2 = 90 deg) -->
 	<arg name="hand_pose" default="-x 0.0 -y 0.0 -z 1.0 -R 1.57 -P -1.57 -Y 0.0" />
 
@@ -63,7 +63,7 @@
 		<arg name="arm" value="false" />
 		<arg name="hand" value="true" />
 		<arg name="start_home" value="$(arg start_home)" />
-		<arg name="tip_sensors" value="$(arg tip_sensors)" />
+		<arg name="tac_sensors" value="$(arg tac_sensors)" />
 		<arg name="biotac_sim" value="$(arg biotac_sim)" />
 		<arg name="hand_pose" value="$(arg hand_pose)" />
 	</include>
