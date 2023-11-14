@@ -71,7 +71,13 @@
 	<!-- set hand serial number -->
 	<arg name="hand_serial" default="1234" />
 	<!-- set hand init position hand init orientation -->
-	<arg name="hand_pose" default="-x 0.0 -y 0.0 -z 1.0 -R 1.57 -P -1.57 -Y 0.0" />
+	<arg if="$(eval hand and arm)" name="robot_pose" default="-x 0.0 -y 0.0 -z 0.1 -R 0.0 -P 0.0 -Y 0.0" />
+	<arg if="$(eval hand and not arm)" name="robot_pose" default="-x 0.0 -y 0.0 -z 0.1 -R 0.0 -P 0.0 -Y 0.0" />
+	<!-- <arg if="$(eval arg('hand') and 'desired_value')" name="robot_pose" default="-x 0.0 -y 0.0 -z 0.1 -R 0.0 -P 0.0 -Y 0.0" /> -->
+
+
+
+	<!-- <arg name="hand_pose" default="-x 0.0 -y 0.0 -z 1.0 -R 1.57 -P -1.57 -Y 0.0" /> -->
 	<!-- set to 0 if the hand description will not be specified with the argument hand_description. In which case it depends on the environment variables -->
 	<arg name="set_hand_description" default="0" />
 	<!-- Xacro file containing the robot description we want to load. Only taken into acount if the set_description arg is set to 1 the default value -->
@@ -192,9 +198,9 @@
     <arg name="mid_sensors" value="$(arg mid_sensors)"/>
     <arg name="prox_sensors" value="$(arg prox_sensors)"/>
     <arg name="palm_sensor" value="$(arg palm_sensor)"/>
-    <arg name="initial_z" value="$(arg initial_z)"/>
+    <!-- <arg name="initial_z" value="$(arg initial_z)"/>
     <arg name="initial_y" value="$(arg initial_y)"/>
-    <arg name="initial_yaw" value="$(arg initial_yaw)"/>
+    <arg name="initial_yaw" value="$(arg initial_yaw)"/> -->
   </include>
 
   <!-- RUNNING THE SIMULATION -->
@@ -212,9 +218,10 @@
   <node name="spawn_model" 
 		pkg="gazebo_ros" 
 		type="spawn_model" 
-		args="-urdf -param robot_description -model $(arg robot_name) $(arg spawn_model_extra_args) $(arg hand_pose)" 
+		args="-urdf -param robot_description -model $(arg robot_name) $(arg spawn_model_extra_args) $(arg robot_pose)" 
 		respawn="false" 
 		output="screen"/>
+		<!-- args="-urdf -param robot_description -model $(arg robot_name) $(arg spawn_model_extra_args) $(arg hand_pose)"  -->
 
   <include file="$(find ros_ethercat_model)/launch/joint_state_publisher.launch" >
     <arg name="publish_rate" value="$(arg joint_state_pub_frequency)"/>

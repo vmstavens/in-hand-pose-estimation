@@ -1,0 +1,96 @@
+<!--
+ Software License Agreement (BSD License)
+ Copyright © 2022-2023 belongs to Shadow Robot Company Ltd.
+ All rights reserved.
+ Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+   1. Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+   2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+   3. Neither the name of Shadow Robot Company Ltd nor the names of its contributors
+      may be used to endorse or promote products derived from this software without
+      specific prior written permission.
+ This software is provided by Shadow Robot Company Ltd "as is" and any express
+ or implied warranties, including, but not limited to, the implied warranties of
+ merchantability and fitness for a particular purpose are disclaimed. In no event
+ shall the copyright holder be liable for any direct, indirect, incidental, special,
+ exemplary, or consequential damages (including, but not limited to, procurement of
+ substitute goods or services; loss of use, data, or profits; or business interruption)
+ however caused and on any theory of liability, whether in contract, strict liability,
+ or tort (including negligence or otherwise) arising in any way out of the use of this
+ software, even if advised of the possibility of such damage.
+-->
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"
+       xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" name="ursrh">
+
+    <link name="world"/>
+    <xacro:arg name="initial_x" default="0.0"/>
+    <xacro:arg name="initial_y" default="0.0"/>
+    <xacro:arg name="initial_z" default="0.0"/>
+    <xacro:arg name="initial_R" default="0.0"/>
+    <xacro:arg name="initial_P" default="0.0"/>
+    <xacro:arg name="initial_Y" default="0.0"/>
+
+
+    <xacro:arg name="transmission_hw_interface" default="hardware_interface/PositionJointInterface"/>
+
+    <xacro:arg name="robot_model" default="ur10e"/>
+    <xacro:arg name="kinematics_config" default="$(find ur_description)/config/$(arg robot_model)/default_kinematics.yaml"/>
+    <xacro:include filename="$(find ur_description)/urdf/inc/$(arg robot_model)_macro.xacro"/>
+
+    <xacro:arg name="hand_type" default="hand_e"/>
+    <xacro:arg name="hand_version" default="E3M5"/>
+    <xacro:arg name="side" default="right"/>
+    <xacro:arg name="fingers" default="all"/>
+    <xacro:arg name="tip_sensors" default="pst"/>
+    <xacro:arg name="mid_sensors" default="none"/>
+    <xacro:arg name="prox_sensors" default="none"/>
+    <xacro:arg name="palm_sensor" default="none"/>
+
+    <xacro:if value="${'$(arg side)' == 'right'}">
+        <xacro:arg name="arm_prefix" default="ra" />
+        <xacro:arg name="hand_prefix" default="rh" />
+    </xacro:if>
+    <xacro:if value="${'$(arg side)' == 'left'}">
+        <xacro:arg name="arm_prefix" default="la" />
+        <xacro:arg name="hand_prefix" default="lh" />
+    </xacro:if>
+
+    <xacro:if value="${'$(arg robot_model)' == 'ur10e'}">
+        <xacro:ur10e_robot prefix="$(arg arm_prefix)_" transmission_hw_interface="$(arg transmission_hw_interface)" kinematics_parameters_file="$(arg kinematics_config)"/>
+    </xacro:if>
+    <xacro:if value="${'$(arg robot_model)' == 'ur10'}">
+        <xacro:ur10_robot prefix="$(arg arm_prefix)_" transmission_hw_interface="$(arg transmission_hw_interface)" kinematics_parameters_file="$(arg kinematics_config)"/>
+    </xacro:if>
+    <xacro:if value="${'$(arg robot_model)' == 'ur5e'}">
+        <xacro:ur5e_robot prefix="$(arg arm_prefix)_" transmission_hw_interface="$(arg transmission_hw_interface)" kinematics_parameters_file="$(arg kinematics_config)"/>
+    </xacro:if>
+    <xacro:if value="${'$(arg robot_model)' == 'ur5'}">
+        <xacro:ur5_robot prefix="$(arg arm_prefix)_" transmission_hw_interface="$(arg transmission_hw_interface)" kinematics_parameters_file="$(arg kinematics_config)"/>
+    </xacro:if>
+
+    <xacro:include filename="$(find sr_description)/other/xacro/materials.urdf.xacro"/>
+    <xacro:include filename="$(find sr_description)/hand/xacro/hand.urdf.xacro"/>
+    <xacro:include filename="$(find sr_description)/other/xacro/gazebo.urdf.xacro"/>
+
+    <xacro:sr_hand side="$(arg side)" hand_type="$(arg hand_type)" hand_version="$(arg hand_version)"
+                   fingers="$(arg fingers)" tip_sensors="$(arg tip_sensors)" mid_sensors="$(arg mid_sensors)"
+                   prox_sensors="$(arg prox_sensors)" palm_sensor="$(arg palm_sensor)" mounting_plate="true"/>
+
+    <joint name="world_joint" type="fixed">
+        <parent link="world"/>
+        <child link="$(arg arm_prefix)_base_link"/>
+        <origin xyz="$(arg initial_x) $(arg initial_y) $(arg initial_z)" rpy="$(arg initial_R) $(arg initial_P) $(arg initial_Y)"/>
+    </joint> 
+
+    <joint name="$(arg arm_prefix)_arm_to_hand" type="fixed">
+        <parent link="$(arg arm_prefix)_flange"/>
+        <child link="$(arg hand_prefix)_forearm"/>
+        <origin xyz="0.0 0.0 0.0" rpy="${pi/2.0} ${pi} ${pi/2.0}"/>
+    </joint>
+</robot>

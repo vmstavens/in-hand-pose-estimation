@@ -14,6 +14,9 @@
 	<!-- use hand in simulation -->
 	<arg name="hand" default="true" />
 
+	<!-- spawn arm -->
+	<arg name="arm" default="true" />
+
 	<!-- the type of tactile sensor you want to use (pst, bt_sp, bt_2p) -->
 	<arg name="tac_sensors" default="pst" />
 
@@ -60,8 +63,8 @@
 	<!-- add shadow hand model -->
 	<include file="$(find shadow_hand)/robots/shadow_hand.launch">
 		<arg name="gui" value="$(arg gui)" />
-		<arg name="arm" value="false" />
-		<arg name="hand" value="true" />
+		<arg name="arm" value="$(arg arm)" />
+		<arg name="hand" value="$(arg hand)" />
 		<arg name="start_home" value="$(arg start_home)" />
 		<arg name="tac_sensors" value="$(arg tac_sensors)" />
 		<arg name="biotac_sim" value="$(arg biotac_sim)" />
