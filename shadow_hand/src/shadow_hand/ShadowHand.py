@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from ros_utils_py.log import Logger
-import time
+import time 
 from sr_robot_commander.sr_hand_commander import SrHandCommander
 from sr_utilities.hand_finder import HandFinder
 from typing import List, Dict, Optional, Union
@@ -18,20 +18,20 @@ import rosnode
 class ShadowHand:
 	"""A wrapper class for interacting with the Shadow Dexterous Hand"""
 
-	def __init__(self):
+	def __init__(self, connect_timeout:int = 10):
 
 		# logger
 		self.__log = Logger()
 
 		# wait for rviz-/move_group node to be initiated such that the hand can be communicated with
-		timeout = 10
 		t = 0
 		while not rosnode.get_node_names().count("/move_group"):
 			rospy.sleep(1)
-			self.__log.warn(f"Waiting for /move_group to be initiated such that a connection to the Shadow Dexterous Hand can be made... Timeout {t}/{timeout} s...")
+			self.__log.warn(f"Waiting for /move_group to be initiated such that a connection to the Shadow Dexterous Hand can be made... Timeout {t}/{connect_timeout} s...")
 			t += 1
-			if t >= timeout:
+			if t > connect_timeout:
 				self.__log.error("Failed to find /move_group and could therefore not connect to Shadow Dexterous Hand...")
+				raise ConnectionError(f"/move_group was not connected to within the timelimit {connect_timeout}")
 
 		# has the biotac flag been set in launch file
 		self.__is_biotac_sim_live = rospy.get_param('/biotac_sim')
