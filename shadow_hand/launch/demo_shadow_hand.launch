@@ -15,7 +15,7 @@
 	<arg name="hand" default="true" />
 
 	<!-- spawn arm -->
-	<arg name="arm" default="true" />
+	<arg name="arm" default="false" />
 
 	<!-- the type of tactile sensor you want to use (pst, bt_sp, bt_2p) -->
 	<arg name="tac_sensors" default="pst" />
@@ -28,7 +28,9 @@
 	<arg name="biotac_sim" default="false" />
 	<arg if="$(eval arg('tac_sensors') == 'bt_2p')" name="biotac_sim" value="true" />
 	<!-- position of the hand's spawn point. Orientation of the hand's spawn point, measured radians in WORLD Roll-Pitch-Yaw (1.57 = pi/2 = 90 deg) -->
-	<arg name="hand_pose" default="-x 0.0 -y 0.0 -z 1.0 -R 1.57 -P -1.57 -Y 0.0" />
+	<!-- <arg name="initial_robot_position"    default="0.0 0.0 1.0" />
+	<arg name="initial_robot_orientation" default="1.57 -1.57 0.0" /> -->
+	<!-- <arg name="hand_pose" default="-x 0.0 -y 0.0 -z 1.0 -R 1.57 -P -1.57 -Y 0.0" /> -->
 
 	<!-- // World specific arguments ///////////////////////////////////////////////////////////////////////// -->
 
@@ -48,7 +50,7 @@
 	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- finger_control_demo node -->
-	<node pkg="shadow_hand" name="finger_control_demo" type="finger_control_demo.py" output="$(arg output)" />
+	<!-- <node pkg="shadow_hand" name="finger_control_demo" type="finger_control_demo.py" output="$(arg output)" /> -->
 
 	<!-- // Environment variables ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
@@ -68,8 +70,9 @@
 		<arg name="start_home" value="$(arg start_home)" />
 		<arg name="tac_sensors" value="$(arg tac_sensors)" />
 		<arg name="biotac_sim" value="$(arg biotac_sim)" />
-		<arg name="hand_pose" value="$(arg hand_pose)" />
 	</include>
+		<!-- <arg name="initial_robot_position" value="'$(arg initial_robot_position)'" />
+		<arg name="initial_robot_orientation" value="'$(arg initial_robot_orientation)'" /> -->
 
 	<!-- // Load in world ///////////////////////////////////////////////////////////////////////// -->
 

@@ -29,12 +29,7 @@
        xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" name="ursrh">
 
     <link name="world"/>
-    <xacro:arg name="initial_x" default="0.0"/>
-    <xacro:arg name="initial_y" default="0.0"/>
-    <xacro:arg name="initial_z" default="0.0"/>
-    <xacro:arg name="initial_R" default="0.0"/>
-    <xacro:arg name="initial_P" default="0.0"/>
-    <xacro:arg name="initial_Y" default="0.0"/>
+    <!-- -x 0.0 -y 0.0 -z 0.1 -R 0.0 -P 0.0 -Y 0.0 -->
 
 
     <xacro:arg name="transmission_hw_interface" default="hardware_interface/PositionJointInterface"/>
@@ -51,6 +46,9 @@
     <xacro:arg name="mid_sensors" default="none"/>
     <xacro:arg name="prox_sensors" default="none"/>
     <xacro:arg name="palm_sensor" default="none"/>
+    
+    <xacro:arg name="initial_robot_position" default="0.0 0.0 0.1"/>
+    <xacro:arg name="initial_robot_orientation" default="0.0 0.0 0.0"/>
 
     <xacro:if value="${'$(arg side)' == 'right'}">
         <xacro:arg name="arm_prefix" default="ra" />
@@ -85,7 +83,8 @@
     <joint name="world_joint" type="fixed">
         <parent link="world"/>
         <child link="$(arg arm_prefix)_base_link"/>
-        <origin xyz="$(arg initial_x) $(arg initial_y) $(arg initial_z)" rpy="$(arg initial_R) $(arg initial_P) $(arg initial_Y)"/>
+        <origin xyz="$(arg initial_robot_position)" rpy="$(arg initial_robot_orientation)"/>
+        <!-- <origin xyz="$(arg initial_x) $(arg initial_y) $(arg initial_z)" rpy="$(arg initial_R) $(arg initial_P) $(arg initial_Y)"/> -->
     </joint> 
 
     <joint name="$(arg arm_prefix)_arm_to_hand" type="fixed">
