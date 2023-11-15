@@ -50,7 +50,7 @@
 	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- finger_control_demo node -->
-	<!-- <node pkg="shadow_hand" name="finger_control_demo" type="finger_control_demo.py" output="$(arg output)" /> -->
+	<node pkg="shadow_hand" name="finger_control_demo" type="finger_control_demo.py" output="$(arg output)" />
 
 	<!-- // Environment variables ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
