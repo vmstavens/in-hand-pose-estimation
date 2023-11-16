@@ -28,6 +28,8 @@ catkin_python_setup()
 catkin_install_python(
   PROGRAMS 
     examples/finger_control_demo.py
+    examples/robot_control_demo.py
+    examples/debug.py
 
 	
     # src/shadow_hand/ShadowFinger.py

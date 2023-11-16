@@ -10,84 +10,51 @@ from sr_robot_commander.sr_arm_commander import SrArmCommander
 from sr_robot_commander.sr_hand_commander import SrHandCommander
 from sr_utilities.arm_finder import ArmFinder
 from sr_utilities.hand_finder import HandFinder
+from shadow_hand import ShadowHand
 import math as m
 
 def main() -> None:
+
+	# TODO : 
+	# 	1) perform planned motion
+	# 	2) perform planned motion + gravity
+	# 	3) place two boxes into world
+	# 	4) build plan to pick up box 1
+	# 	5) build plan to place box 1 onto box 2
+	# 	6) complete
+	#   ----- pain threshold -----
+	# 	7) attempt to find digit tactile plugin and mesh for gazebo.  
 
 	# waiting period for robot hand to start up...
 	waiting_time: int = 10  # s
 	rospy.loginfo(f"waiting {waiting_time} for hand to start...")
 	time.sleep(waiting_time)
 
+	# joint configuration, from base to tip (does this make contact with the pen? yes)
+	q: list = [0.0, m.pi, m.pi/2.0]
 	
-	# rospy.init_node("robot_commander_examples", anonymous=True)
-	arm_commander = SrArmCommander(name="right_arm", set_ground=True)
-	hand_finder = HandFinder()
-	arm_finder = ArmFinder()
+	# q: list = [0.0, m.pi / 2.0, 0.0]
 
-	# hand finder - gets data from the found hand(s)
-	hand_finder: HandFinder = HandFinder()
-
-	# hand config object
-	hand_parameters = hand_finder.get_hand_parameters()
-
-	# serial numbers for the hands found
-	hand_serial_numbers: list = list(
-		hand_parameters.mapping.keys())
-
-	# the 0'th hand serial number (['1234', '0']) '0' is here a dummy and '1234' is the serial for the simulated hand
-	hand_serial: str = hand_serial_numbers[0]
-
-	# get a hand commander, which can communicate with the hand specified by the inputs
-	hand_commander = SrHandCommander(hand_parameters=hand_parameters, hand_serial=hand_serial)
-
-	# To get the prefix or mapping of the arm joints. Mapping is the same as prefix but without underscore.
-	arm_finder.get_arm_parameters().joint_prefix.values()
-	arm_finder.get_arm_parameters().mapping.values()
-	reference_frame = arm_commander.get_pose_reference_frame()
-	rospy.logerr(reference_frame + " #######################################################################")
-	arm_finder.get_arm_joints()
-	
-	new_pose = [0.5, 0.3, 1.2, 0, 1.57, 0]
-
-	# To only plan
-	arm_commander.plan_to_pose_target(new_pose)
-
-	# To plan and move
-	arm_commander.move_to_pose_target(new_pose)
-
-
-	rospy.logerr(hand_commander.get_current_state())
-
-	hand_commander.plan_to_named_target("open")
-	hand_commander.move_to_named_target("open")
-	hand_commander.plan_to_named_target("pack")
-	hand_commander.move_to_named_target("pack")
-	# # joint configuration, from base to tip (does this make contact with the pen? yes)
-	# q: list = [0.0, m.pi, m.pi/2.0]
-	
-	# # q: list = [0.0, m.pi / 2.0, 0.0]
-
-	# # create shadow hand object
-	# sh = ShadowHand()
+	# create shadow hand object
+	sh = ShadowHand()
  
-	# # set the index finger to q
-	# sh.index_finger.set_q(q)
+	# set the index finger to q
+	sh.index_finger.set_q(q)
  
-	# # init logger and directory
-	# log = Logger()
+	# init logger and directory
+	log = Logger()
  
  
-	# # print tactile information when available
-	# while (True):
-	# 	time.sleep(1)
-	# 	log.warn(str(sh.index_finger.q))
+	# print tactile information when available
+	while (True):
+		time.sleep(1)
+		log.warn(str(sh.index_finger.q))
 		
-	# 	if sh.index_finger.is_in_contact:
-	# 		log.info(f"contact point coordinates: {sh.index_finger.contact_state}")
-	# 	else:
-	# 		log.info("waiting for contacts...")
-	# keep_alive(rospy.get_name())
+		if sh.index_finger.is_in_contact:
+			log.info(f"contact point coordinates: {sh.index_finger.contact_state}")
+		else:
+			log.info("waiting for contacts...")
+	keep_alive(rospy.get_name())
 
 if __name__ == '__main__':
 	try:

@@ -34,7 +34,10 @@ class ShadowHand:
 				raise ConnectionError(f"/move_group was not connected to within the timelimit {connect_timeout}")
 
 		# has the biotac flag been set in launch file
-		self.__is_biotac_sim_live = rospy.get_param('/biotac_sim')
+		try:
+			self.__is_biotac_sim_live = rospy.get_param('/biotac_sim')
+		except:
+			self.__is_biotac_sim_live = False
 
 		if self.__is_biotac_sim_live:
 			self.__log.success("biotac_sim is live and ready for use...") 
