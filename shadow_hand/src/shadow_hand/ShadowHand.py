@@ -35,7 +35,8 @@ class ShadowHand:
 
 		# has the biotac flag been set in launch file
 		try:
-			self.__is_biotac_sim_live = rospy.get_param('/biotac_sim')
+			self.__is_biotac_sim_live = False
+			# self.__is_biotac_sim_live = rospy.get_param('/biotac_sim')
 		except:
 			self.__is_biotac_sim_live = False
 

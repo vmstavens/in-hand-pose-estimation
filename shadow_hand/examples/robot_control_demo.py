@@ -19,6 +19,7 @@ from moveit_commander import MoveGroupCommander, RobotCommander, PlanningSceneIn
 import moveit_commander
 import copy
 import moveit_msgs.msg 
+from shadow_hand import ShadowHand
 
 def get_model_pose(model_name):
     rospy.wait_for_service('/gazebo/get_model_state')
@@ -75,7 +76,7 @@ def main() -> None:
     mg = MoveGroupCommander(name)
 
     # x y z r p y
-    d_grasp = 0.06
+    d_grasp = 0.08
     d_place = 0.5
 
     flat_orientation = geometry.euler2quaternion(m.pi/2.0, 0.0, m.pi)
@@ -117,38 +118,62 @@ def main() -> None:
         orientation = flat_orientation
     )
 
-    waypoints = [
-        home,
+    way_to_box_1 = [
+        # home,
         middle_pose,
         box_1_hover_pose,
-        box_1_grasp_pose,
+        box_1_grasp_pose
+    ]
+    way_to_box_2 = [
         box_1_hover_pose,
         middle_pose,
         box_2_hover_pose,
-        box_2_grasp_pose,
+        box_2_grasp_pose
+    ]
+
+    way_to_return = [
         box_2_hover_pose,
         home
     ]
     
-    (plan, fraction) = mg.compute_cartesian_path(
-        waypoints=waypoints, 
-        eef_step=0.001, 
-        jump_threshold=0.0)
+    (plan_1, fraction_1) = mg.compute_cartesian_path(waypoints=way_to_box_1, eef_step=0.001, jump_threshold=0.0)
+    (plan_2, fraction_2) = mg.compute_cartesian_path(waypoints=way_to_box_2, eef_step=0.001, jump_threshold=0.0)
+    (plan_3, fraction_3) = mg.compute_cartesian_path(waypoints=way_to_return, eef_step=0.001, jump_threshold=0.0)
 
-    log.warn(fraction)
+    log.warn(f"fractions 1: {fraction_1}, 2: {fraction_2}, 3: {fraction_3}")
 
     # mg.compute_cartesian_path(waypoints=waypoints)
     display_trajectory = moveit_msgs.msg.DisplayTrajectory()
-    display_trajectory_publisher = rospy.Publisher(
-        "/move_group/display_planned_path",
-        moveit_msgs.msg.DisplayTrajectory,
-        queue_size=20,
-    )
-
+    display_trajectory_publisher = rospy.Publisher("/move_group/display_planned_path",moveit_msgs.msg.DisplayTrajectory,queue_size=20)
     display_trajectory.trajectory_start = mg.get_current_state()
-    display_trajectory.trajectory.append(plan)
-    # Publish
+    display_trajectory.trajectory.append(plan_1)
     display_trajectory_publisher.publish(display_trajectory)
+
+    sh = ShadowHand()
+    
+    open = {
+        sh.index_finger:  [0.0, 0.0, 0.0],
+        sh.middle_finger: [0.0, 0.0, 0.0],
+        sh.ring_finger:   [0.0, 0.0, 0.0],
+        sh.little_finger: [0.0, 0.0, 0.0],
+        sh.thumb_finger:  [0.0, 0.0, 0.0]
+    }
+
+    close = {
+        sh.index_finger:  [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0],
+        sh.middle_finger: [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0],
+        sh.ring_finger:   [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0],
+        sh.little_finger: [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0],
+        sh.thumb_finger:  [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0]
+    }
+
+
+    # execute motion
+    mg.execute(plan_1, wait=True)
+    sh.set_q(open)
+    sh.set_q(close)
+
+
 
     # show movegroups ##################################################
     # global robot
@@ -163,7 +188,6 @@ def main() -> None:
     #     print_group_info(group)
 
     # execute movements ##################################################
-    mg.execute(plan, wait=False)
 
     while (mg.get_current_pose() != home):
         time.sleep(0.5)
