@@ -32,7 +32,7 @@
   <arg name="sim" default="true"/>
   
   <!-- model gravity -->
-  <arg name="model_gravity" default="false"/>
+  <arg name="model_gravity" default="true"/>
   
   <!-- set model gravity -->
   <arg name="model_name_suffix" default="static" if="$(eval not model_gravity)"/>
@@ -41,27 +41,30 @@
   <!-- prop attributes -->
   <arg name="prop" default="cube" />
   <arg name="model_path" default="$(find shadow_hand)/../models/" />
-  <arg name="prop_pose_1" default="-x 0.5 -y 0.0 -z 0.05 -R 0.0 -P 0.0 -Y 0.0" />
-  <arg name="prop_pose_2" default="-x 1.0 -y 0.0 -z 0.05 -R 0.0 -P 0.0 -Y 0.0" />
+  <arg name="prop_pose_1" default="-x 0.5 -y 1.0 -z 0.55 -R 0.0 -P 0.0 -Y 0.0" />
+  <arg name="prop_pose_2" default="-x -0.5 -y 1.0 -z 0.55 -R 0.0 -P 0.0 -Y 0.0" />
   
   <!-- spawn prop -->
   <group unless="$(eval arg('prop') == 'False')">
     <node name="spawn_prop_1" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-file $(arg model_path)$(arg prop)/model_$(arg model_name_suffix).sdf -sdf $(arg prop_pose_1) -model $(arg prop)_1"/>
     <node name="spawn_prop_2" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-file $(arg model_path)$(arg prop)/model_$(arg model_name_suffix).sdf -sdf $(arg prop_pose_2) -model $(arg prop)_2"/>
+    <node name="spawn_prop_3" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-file $(arg model_path)target/model_static.sdf -sdf -x 0.5 -y 0.5 -z 0.5 -model target"/>
+  
   </group>
 
-  <!-- <node name="reset_gazebo" pkg="rosservice" type="rosservice" args="call /gazebo/reset_world " output="$(arg output)"/> -->
 
   <!-- robot_control_demo node -->
   <!-- <node pkg="shadow_hand" name="debug" type="debug.py" output="$(arg output)" /> -->
   <node pkg="shadow_hand" name="robot_control_demo" type="robot_control_demo.py" output="$(arg output)" />
 
-  <arg name="initial_z" default="0.0"/>
+  <arg name="initial_z" default="0.5"/>
 
   <!-- This launch file is for the right ur10 arm and a shadow hand -->
   <include file="$(find sr_robot_launch)/launch/sr_right_ur10arm_hand.launch">
     <arg name="sim" value="$(arg sim)" />
     <arg name="initial_z" value="$(arg initial_z)" />
   </include>
+
+  <node name="reset_gazebo" pkg="rosservice" type="rosservice" args="call /gazebo/reset_world " output="$(arg output)"/>
 
 </launch>

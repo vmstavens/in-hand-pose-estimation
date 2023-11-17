@@ -1,0 +1,26 @@
+<!-- big_box as a test object for in hand pose estimation -->
+<sdf version="1.6">
+	<model name="big_box">
+		<static>false</static>
+		<link name="base_link">
+			<collision name="collision">
+				<geometry>
+					<box>
+						<size>1.0 0.3 0.5</size>
+					</box>
+				</geometry>
+			</collision>
+			<visual name="visual">
+				<geometry>
+					<box>
+						<size>1.0 0.3 0.5</size>
+					</box>
+				</geometry>
+			</visual>
+			<inertial>
+				<mass>10.0</mass>   <!-- Set the mass of the link to 10.0 kg -->
+				<origin xyz="0 0 0" />
+			</inertial>
+		</link>
+	</model>
+</sdf>

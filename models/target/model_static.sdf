@@ -1,0 +1,33 @@
+<?xml version='1.0'?>
+<sdf version='1.4'>
+    <model name="target">
+      <static>true</static>
+     <link name='base_link'>
+            <pose>0 0 0 0 0 0</pose>
+        <collision name='collision'>
+              <geometry>
+                <sphere>
+                  <radius>0.0</radius>
+          </sphere>
+        </geometry>
+      </collision>
+        <visual name='castor_visual'>
+        <!-- <visual name='visual'> -->
+            <geometry>
+                <sphere>
+                <radius>
+              0.01</radius>
+          </sphere>
+        </geometry>
+
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+          <emissive>0 0 0 0</emissive>
+        </material>
+
+      </visual>
+        </link>
+    </model>
+</sdf>

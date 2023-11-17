@@ -13,10 +13,12 @@ from sr_utilities.arm_finder import ArmFinder
 from sr_utilities.hand_finder import HandFinder
 import math as m
 from gazebo_msgs.srv import GetModelState
-from geometry_msgs.msg import PoseStamped, Point, Quaternion, TransformStamped
+from geometry_msgs.msg import PoseStamped, Point, Quaternion, TransformStamped, Pose
 from sensor_msgs.msg import JointState
 from moveit_commander import MoveGroupCommander, RobotCommander, PlanningSceneInterface
-
+import moveit_commander
+import copy
+import moveit_msgs.msg 
 
 def get_model_pose(model_name):
     rospy.wait_for_service('/gazebo/get_model_state')
@@ -27,11 +29,36 @@ def get_model_pose(model_name):
     except rospy.ServiceException as e:
         rospy.logerr("Service call failed: {}".format(e))
 
+def print_group_info(group_name):
 
+    _log = Logger()
 
+    # Create a MoveGroupCommander instance for the group
+    group = robot.get_group(group_name)
+
+    # Print information about the group
+    _log.warn("   Group: {}".format(group_name))
+    try:
+        _log.warn("   End Effector Link: {}".format(group.get_end_effector_link()))
+    except:
+        _log.warn("   No Effector Link Found")
+    
+    try:
+        _log.warn("   Current Joint Values: {}".format(group.get_current_joint_values()))
+    except:
+        _log.warn("   No Joint Values Found")
+
+    try:
+        _log.warn("   Current Pose: {}".format(group.get_current_pose()))
+    except:
+        _log.warn("   No Current Pose Found")
 
 def main() -> None:
     log = Logger()
+    # waiting period for robot hand to start up...
+    waiting_time: int = 10  # s
+    rospy.loginfo(f"waiting {waiting_time} for hand to start...")
+    time.sleep(waiting_time)
 
     # TODO : 
     # 	1) [x] perform planned motion
@@ -43,64 +70,128 @@ def main() -> None:
     #   ----- pain threshold -----
     # 	7) attempt to find digit tactile plugin and mesh for gazebo.
 
-    # x y z r p y
-    target_pose: PoseStamped = geometry.mk_pose_stamped(x=0.5, y=0.5, z=0.5, qx=1.0, qy=0.0, qz=0.0, w=m.pi)
+    name = "right_arm_and_manipulator"
 
-    # waiting period for robot hand to start up...
-    waiting_time: int = 10  # s
-    rospy.loginfo(f"waiting {waiting_time} for hand to start...")
-    time.sleep(waiting_time)
-
-    cube_names = ["cube_1", "cube_2"]
-    cube_poses = [get_model_pose(cube_names[0]), get_model_pose(cube_names[1])]
-
-    for i, p in enumerate(cube_poses):
-        log.success("Pose of {} in the world frame:{}".format(cube_names[i], p))
-
-    # rospy.init_node("robot_commander_examples", anonymous=True)
-    arm_commander = SrArmCommander(name="right_arm", set_ground=True)
-    hand_finder = HandFinder()
-
-    # hand finder - gets data from the found hand(s)
-    hand_finder: HandFinder = HandFinder()
-
-    # hand config object
-    hand_parameters = hand_finder.get_hand_parameters()
-
-    # serial numbers for the hands found
-    hand_serial_numbers: list = list(
-        hand_parameters.mapping.keys())
-
-    # the 0'th hand serial number (['1234', '0']) '0' is here a dummy and '1234' is the serial for the simulated hand
-    hand_serial: str = hand_serial_numbers[0]
-
-    # get a hand commander, which can communicate with the hand specified by the inputs
-    hand_commander = SrHandCommander(hand_parameters=hand_parameters, hand_serial=hand_serial)
-    log.success("----------------------------")
-    tp: PoseStamped = geometry.pose2poseStamped(cube_poses[0])
-    log.success(tp)
-
-    # fk
-    # hand_commander.get_end_effector_pose_from_state()
-
-    # get world frame
-
-    # hand_pose = hand_commander.get_current_pose()
-
-    arm_pose = arm_commander.get_current_pose(reference_frame="world")
-    log.warn(arm_commander.get_pose_reference_frame())
-    log.warn(arm_pose)
-    log.warn(hand_commander)
-
-    name = "right_arm_and_hand"
     mg = MoveGroupCommander(name)
+
+    # x y z r p y
+    d_grasp = 0.06
+    d_place = 0.5
+
+    flat_orientation = geometry.euler2quaternion(m.pi/2.0, 0.0, m.pi)
+
+    home: Pose = Pose(
+        position = copy.deepcopy(mg.get_current_pose().pose.position),
+        orientation = flat_orientation
+    )
+
+    box_1_pose: Pose = Pose(position = get_model_pose("cube_1").position, orientation = flat_orientation)
+    box_2_pose: Pose = Pose(position = get_model_pose("cube_2").position, orientation = flat_orientation)
+
+    box_1_grasp_pose: Pose = box_1_pose
+    box_1_grasp_pose.position.z += d_grasp
+
+    box_2_grasp_pose: Pose = box_2_pose
+    box_2_grasp_pose.position.z += d_grasp
+
+    middle_pose: Pose = Pose(
+        position = Point(
+            x = box_1_grasp_pose.position.x + box_2_pose.position.x / 2.0,
+            y = box_1_grasp_pose.position.y,
+            z = box_1_grasp_pose.position.z + d_place),
+        orientation = flat_orientation
+        )
+
+    box_1_hover_pose: Pose = Pose(
+        position = Point(
+            x = box_1_grasp_pose.position.x,
+            y = box_1_grasp_pose.position.y,
+            z = box_1_grasp_pose.position.z + d_place),
+        orientation = flat_orientation
+    )
+    box_2_hover_pose: Pose = Pose(
+        position = Point(
+            x = box_2_grasp_pose.position.x,
+            y = box_2_grasp_pose.position.y,
+            z = box_2_grasp_pose.position.z + d_place),
+        orientation = flat_orientation
+    )
+
+    waypoints = [
+        home,
+        middle_pose,
+        box_1_hover_pose,
+        box_1_grasp_pose,
+        box_1_hover_pose,
+        middle_pose,
+        box_2_hover_pose,
+        box_2_grasp_pose,
+        box_2_hover_pose,
+        home
+    ]
     
-    log.warn(mg.get_current_joint_values())
-    log.warn(mg.get_current_state())
-    mg.set_end_effector_link("rh_WRJ2")
-    log.warn(mg.get_end_effector_link())
-    log.warn(mg.set_pose_target(pose=target_pose))
-    # mg.set_pose_target(pose=target_pose)
+    (plan, fraction) = mg.compute_cartesian_path(
+        waypoints=waypoints, 
+        eef_step=0.001, 
+        jump_threshold=0.0)
+
+    log.warn(fraction)
+
+    # mg.compute_cartesian_path(waypoints=waypoints)
+    display_trajectory = moveit_msgs.msg.DisplayTrajectory()
+    display_trajectory_publisher = rospy.Publisher(
+        "/move_group/display_planned_path",
+        moveit_msgs.msg.DisplayTrajectory,
+        queue_size=20,
+    )
+
+    display_trajectory.trajectory_start = mg.get_current_state()
+    display_trajectory.trajectory.append(plan)
+    # Publish
+    display_trajectory_publisher.publish(display_trajectory)
+
+    # show movegroups ##################################################
+    # global robot
+    # robot = RobotCommander()
+
+    # # Get the list of all groups
+    # all_groups = robot.get_group_names()
+
+    # log.warn("List of MoveIt groups:")
+    # for group in all_groups:
+    #     log.warn("- {}".format(group))
+    #     print_group_info(group)
+
+    # execute movements ##################################################
+    mg.execute(plan, wait=False)
+
+    while (mg.get_current_pose() != home):
+        time.sleep(0.5)
+        log.success(f"   current pose {mg.get_current_pose().pose.position}")
+
+    # for jn in mg.get_joints():
+    #     try: 
+    #         log.warn(mg.set_end_effector_link(jn))
+    #         log.success(f"Set {jn} as the end effector")
+    #     except:
+    #         log.error(f"Attempted to set {jn} as the end effector....but failed")
+
+    # log.warn(mg.set_end_effector_link("rh_palm"))
+    # mg.robot.get_group("panda_arm").set_end_effector_link("panda_gripper_center"
+    # mg.set_end_effector_link("rh_WRJ2")
+    # log.warn("end effector link =" + str(mg.get_end_effector_link()))
+    # log.warn("get current pose ="  + str(mg.get_current_pose()))
+    # log.warn(mg.set_pose_target(pose=target_pose))
+    
+
+
+    # scene = moveit_commander.PlanningSceneInterface()
+    # box_pose = PoseStamped()
+    # box_pose.header.frame_id = "world"
+    # box_pose.pose.orientation.w = 1.0
+    # box_pose.pose.position.y = 5
+    # box_name = "box"
+    # scene.add_box(box_name, box_pose, size=(0.1, 0.1, 0.1))
 
     # right_arm_and_hand
 
