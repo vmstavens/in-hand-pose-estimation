@@ -31,7 +31,8 @@ def main() -> None:
 	time.sleep(waiting_time)
 
 	# joint configuration, from base to tip (does this make contact with the pen? yes)
-	q: list = [0.0, m.pi, m.pi/2.0]
+	q: list = [m.pi/4.0, m.pi/4.0, 0.0]
+	# q: list = [0.0, m.pi / 2.0, m.pi/2.0]
 	
 	# q: list = [0.0, m.pi / 2.0, 0.0]
 
@@ -43,7 +44,7 @@ def main() -> None:
  
 	# init logger and directory
 	log = Logger()
- 
+	# 1.1751135385968023, 1.1811629668337202
  
 	# print tactile information when available
 	while (True):
