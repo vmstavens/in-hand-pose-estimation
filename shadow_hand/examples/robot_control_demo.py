@@ -18,8 +18,18 @@ from sensor_msgs.msg import JointState
 from moveit_commander import MoveGroupCommander, RobotCommander, PlanningSceneInterface
 import moveit_commander
 import copy
-import moveit_msgs.msg 
+import moveit_msgs.msg
 from shadow_hand import ShadowHand
+from trajectory_msgs.msg import JointTrajectory
+from moveit_msgs.msg import (
+    RobotTrajectory,
+    Grasp,
+    PlaceLocation,
+    Constraints,
+    RobotState,
+)
+import pickle
+import os
 
 def get_model_pose(model_name):
     rospy.wait_for_service('/gazebo/get_model_state')
@@ -54,6 +64,22 @@ def print_group_info(group_name):
     except:
         _log.warn("   No Current Pose Found")
 
+def save_robot_traj(rt: RobotTrajectory, file_path:str) -> None:
+    # if file does not exist, create one
+    if not os.path.exists(file_path):
+        f = open(file_path,"w")
+        f.close()
+
+
+    with open(file_path, 'wb') as fp:
+        pickle.dump(rt, fp)
+
+def load_robot_traj(file_path:str) -> RobotTrajectory:
+    plan = None
+    with open(file_path, 'rb') as file_open:
+        plan = pickle.load(file_open)[1]
+    return plan
+
 def main() -> None:
     log = Logger()
     # waiting period for robot hand to start up...
@@ -76,7 +102,8 @@ def main() -> None:
     mg = MoveGroupCommander(name)
 
     # x y z r p y
-    d_grasp = 0.08
+    d_grasp = 0.1
+    # d_grasp = 0.08
     d_place = 0.5
 
     flat_orientation = geometry.euler2quaternion(m.pi/2.0, 0.0, m.pi)
@@ -91,6 +118,7 @@ def main() -> None:
 
     box_1_grasp_pose: Pose = box_1_pose
     box_1_grasp_pose.position.z += d_grasp
+    box_1_grasp_pose.position.y -= 0.05
 
     box_2_grasp_pose: Pose = box_2_pose
     box_2_grasp_pose.position.z += d_grasp
@@ -150,28 +178,37 @@ def main() -> None:
     display_trajectory_publisher.publish(display_trajectory)
 
     sh = ShadowHand()
+
+    q_thumb_max = 1.22 # rad, 70 in deg
     
     open = {
         sh.index_finger:  [0.0, 0.0, 0.0],
         sh.middle_finger: [0.0, 0.0, 0.0],
         sh.ring_finger:   [0.0, 0.0, 0.0],
         sh.little_finger: [0.0, 0.0, 0.0],
-        sh.thumb_finger:  [0.0, 0.0, 0.0]
+        sh.thumb_finger:  [0.0, 0.0, 0.0, q_thumb_max]
     }
+
+    close_angle = m.pi/5.0
 
     close = {
-        sh.index_finger:  [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0],
-        sh.middle_finger: [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0],
-        sh.ring_finger:   [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0],
-        sh.little_finger: [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0],
-        sh.thumb_finger:  [m.pi / 2.0, m.pi / 2.0, m.pi / 2.0]
+        sh.index_finger:  [close_angle, close_angle, close_angle],
+        sh.middle_finger: [close_angle, close_angle, close_angle],
+        sh.ring_finger:   [close_angle, close_angle, close_angle],
+        sh.little_finger: [close_angle, close_angle, close_angle],
+        sh.thumb_finger:  [close_angle, close_angle, close_angle]
     }
 
+    plan_1_path = "/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/shadow_hand/experiments/joint_trajectories/plan_1.pickle"
 
+    save_robot_traj(plan_1,plan_1_path)
+    # plan_1 = load_robot_traj(plan_1_path)
     # execute motion
     mg.execute(plan_1, wait=True)
     sh.set_q(open)
-    sh.set_q(close)
+    sh.hand_commander.attach_object("cube_1")
+    time.sleep(2)
+    sh.set_q(close,interpolation_time=3)
 
 
 

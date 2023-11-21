@@ -30,8 +30,10 @@ def main() -> None:
 	rospy.loginfo(f"waiting {waiting_time} for hand to start...")
 	time.sleep(waiting_time)
 
+	q_max = 1.22
+
 	# joint configuration, from base to tip (does this make contact with the pen? yes)
-	q: list = [m.pi/4.0, m.pi/4.0, 0.0]
+	q: list = [0.0, 0.0, 0.0, q_max,0.0]
 	# q: list = [0.0, m.pi / 2.0, m.pi/2.0]
 	
 	# q: list = [0.0, m.pi / 2.0, 0.0]
@@ -40,7 +42,9 @@ def main() -> None:
 	sh = ShadowHand()
  
 	# set the index finger to q
-	sh.index_finger.set_q(q)
+	sh.thumb_finger.set_q(q)
+
+	time.sleep(5)
  
 	# init logger and directory
 	log = Logger()
