@@ -52,6 +52,11 @@
   
   </group>
 
+  <!-- <arg name="physics_engine" default="dart" /> -->
+
+  <!-- <node name="gazebo_34" pkg="gazebo_ros" type="gazebo" respawn="false" output="screen">
+    <param name="physics_engine" value="$(arg physics_engine)" />
+  </node> -->
 
   <!-- robot_control_demo node -->
   <!-- <node pkg="shadow_hand" name="debug" type="debug.py" output="$(arg output)" /> -->
@@ -65,6 +70,6 @@
     <arg name="initial_z" value="$(arg initial_z)" />
   </include>
 
-  <node name="reset_gazebo" pkg="rosservice" type="rosservice" args="call /gazebo/reset_world " output="$(arg output)"/>
+  <!-- <node name="reset_gazebo" pkg="rosservice" type="rosservice" args="call /gazebo/reset_world " output="$(arg output)"/> -->
 
 </launch>

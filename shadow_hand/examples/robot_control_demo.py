@@ -153,6 +153,7 @@ def main() -> None:
         box_1_grasp_pose
     ]
     way_to_box_2 = [
+        box_1_grasp_pose,
         box_1_hover_pose,
         middle_pose,
         box_2_hover_pose,
@@ -164,9 +165,9 @@ def main() -> None:
         home
     ]
     
-    (plan_1, fraction_1) = mg.compute_cartesian_path(waypoints=way_to_box_1, eef_step=0.001, jump_threshold=0.0)
-    (plan_2, fraction_2) = mg.compute_cartesian_path(waypoints=way_to_box_2, eef_step=0.001, jump_threshold=0.0)
-    (plan_3, fraction_3) = mg.compute_cartesian_path(waypoints=way_to_return, eef_step=0.001, jump_threshold=0.0)
+    (plan_1, fraction_1) = mg.compute_cartesian_path(waypoints=way_to_box_1, eef_step=0.01, jump_threshold=0.0)
+    (plan_2, fraction_2) = mg.compute_cartesian_path(waypoints=way_to_box_2, eef_step=0.01, jump_threshold=0.0)
+    (plan_3, fraction_3) = mg.compute_cartesian_path(waypoints=way_to_return, eef_step=0.01, jump_threshold=0.0)
 
     log.warn(f"fractions 1: {fraction_1}, 2: {fraction_2}, 3: {fraction_3}")
 
@@ -189,7 +190,8 @@ def main() -> None:
         sh.thumb_finger:  [0.0, 0.0, 0.0, q_thumb_max]
     }
 
-    close_angle = m.pi/5.0
+    close_angle = m.pi/7
+    # close_angle = m.pi/5.5
 
     close = {
         sh.index_finger:  [close_angle, close_angle, close_angle],
@@ -199,16 +201,20 @@ def main() -> None:
         sh.thumb_finger:  [close_angle, close_angle, close_angle]
     }
 
-    plan_1_path = "/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/shadow_hand/experiments/joint_trajectories/plan_1.pickle"
+    # plan_1_path = "/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/shadow_hand/experiments/joint_trajectories/plan_1.pickle"
 
-    save_robot_traj(plan_1,plan_1_path)
+    # save_robot_traj(plan_1,plan_1_path)
     # plan_1 = load_robot_traj(plan_1_path)
     # execute motion
     mg.execute(plan_1, wait=True)
-    sh.set_q(open)
-    sh.hand_commander.attach_object("cube_1")
     time.sleep(2)
-    sh.set_q(close,interpolation_time=3)
+    sh.set_q(open)
+    time.sleep(2)
+    sh.set_q(close)
+    # sh.hand_commander.attach_object("cube_1")
+    # sh.set_q(close,interpolation_time=1)
+
+    mg.execute(plan_2, wait=True)
 
 
 
