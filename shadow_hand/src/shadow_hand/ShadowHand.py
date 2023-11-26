@@ -245,7 +245,7 @@ class ShadowHand:
 		else:
 			return
 
-	def set_q(self, des_state: Dict[Union[ShadowFinger, ShadowWrist], List[Optional[float]]], interpolation_time: int = 1,block: bool = False) -> None:
+	def set_q(self, des_state: Dict[Union[ShadowFinger, ShadowWrist], List[Optional[float]]], interpolation_time: int = 1,block: bool = False) -> bool:
 		"""sets all joint configurations as specified in the dictionary. One such example can be seen below
 
 			hand_q = {
@@ -260,9 +260,12 @@ class ShadowHand:
 		Returns:
 			bool: if the setting succeeded
 		"""
-		joint_trajectory = self.__make_jt(des_state, interpolation_time=interpolation_time)
-		self.__hand_commander.run_joint_trajectory_unsafe(joint_trajectory,wait=block)
-		return
+		try:
+			joint_trajectory = self.__make_jt(des_state, interpolation_time=interpolation_time)
+			self.__hand_commander.run_joint_trajectory_unsafe(joint_trajectory,wait=block)
+			return True
+		except:
+			return False
 
 		# joints_states = {'rh_FFJ1': 90, 'rh_FFJ2': 90, 'rh_FFJ3': 90, 'rh_FFJ4': 0.0,
 		#            'rh_MFJ1': 90, 'rh_MFJ2': 90, 'rh_MFJ3': 90, 'rh_MFJ4': 0.0,
