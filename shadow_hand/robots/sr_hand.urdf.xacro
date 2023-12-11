@@ -34,7 +34,8 @@
   <xacro:include filename="$(find sr_description)/hand/xacro/hand.urdf.xacro"/>
   <xacro:include filename="$(find sr_description)/other/xacro/gazebo.urdf.xacro"/>
 
-  <xacro:arg name="initial_hand_position" default="0.0 0.0 1.0"/>
+  <!-- <xacro:arg name="initial_hand_position"/> -->
+  <xacro:arg name="initial_hand_position" default="0.0 0.0 2.0"/>
   <xacro:arg name="initial_hand_orientation" default="1.57 -1.57 0.0"/>
 
   <xacro:arg name="hand_type" default="hand_e"/>
@@ -48,14 +49,19 @@
   <xacro:arg name="mounting_plate" default="false"/>
 
   <link name="world" />
+
   <xacro:if value="${'$(arg side)' == 'right'}">
-    <joint name="rh_world_joint" type="fixed">
-      <parent link="world" />
-      <child link="rh_forearm" />
-      <origin xyz="$(arg initial_hand_position)" rpy="$(arg initial_hand_orientation)" />
-      <!-- <origin xyz="0.0 0.0 1.0" rpy="0.0 0.0 0.0" /> -->
-    </joint>
-  </xacro:if>
+  <joint name="rh_world_joint" type="prismatic">
+    <parent link="world" />
+    <child link="rh_forearm" />
+    <origin xyz="$(arg initial_hand_position)" rpy="$(arg initial_hand_orientation)" />
+    <axis xyz="0 0 1"/> <!-- Assuming you want translation along the Z-axis -->
+    <limit lower="-3.14" upper="3.14" effort="1000" velocity="0.8"/> <!-- Adjust limits accordingly -->
+    <!-- <limit lower="-100" upper="100" velocity="0.8" effort="1000"/> -->
+    <!-- <joint name="rh_world_joint" type="fixed"> -->
+  </joint>
+</xacro:if>
+
   <xacro:if value="${'$(arg side)' == 'left'}">
     <joint name="lh_world_joint" type="fixed">
       <parent link="world" />
@@ -67,5 +73,11 @@
   <xacro:sr_hand hand_type="$(arg hand_type)" hand_version="$(arg hand_version)" side="$(arg side)"
                  fingers="$(arg fingers)" tip_sensors="$(arg tip_sensors)" mid_sensors="$(arg mid_sensors)"
                  prox_sensors="$(arg prox_sensors)" palm_sensor="$(arg palm_sensor)" mounting_plate="$(arg mounting_plate)"/>
+
+<controller name="rh_world_joint_controller" type="position_controllers/JointPositionController">
+  <joint name="rh_world_joint"/>
+  <pid p="100.0" i="10.0" d="0.0"/>
+</controller>
+
 
 </robot>

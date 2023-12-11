@@ -26,6 +26,7 @@ class ShadowHand:
 		# wait for rviz-/move_group node to be initiated such that the hand can be communicated with
 		t = 0
 		while not rosnode.get_node_names().count("/move_group"):
+		# while not rosnode.get_node_names().count("/move_group") and not rosnode.get_node_names().count("/right_hand"):
 			rospy.sleep(1)
 			self.__log.warn(f"Waiting for /move_group to be initiated such that a connection to the Shadow Dexterous Hand can be made... Timeout {t}/{connect_timeout} s...")
 			t += 1
@@ -66,6 +67,9 @@ class ShadowHand:
 		# in the hand config object we get the prefix (i.e. chirality) (either 'rh' or 'lh') depending on the type of hand with the serial number
 		self.__hand_chirality = self.__hand_parameters.mapping[self.__hand_serial]
 
+		# hand name
+		self.__name = "right_hand" if self.__hand_chirality == "rh" else "left_hand"
+
 		# get all the joint names in the hand with the hand prefix found above (e.g. 'rh_FFJ1', 'rh_FFJ2', 'rh_FFJ3', 'rh_FFJ4', 'rh_MFJ1', 'rh_MFJ2', ...)
 		self.__joints = self.__hand_finder.get_hand_joints()[self.__hand_chirality]
 
@@ -97,6 +101,10 @@ class ShadowHand:
 	@property
 	def hand_commander(self):
 		return self.__hand_commander
+	
+	@property
+	def name(self):
+		return self.__name
 
 	@property
 	def update_frequency(self) -> float:
@@ -261,10 +269,13 @@ class ShadowHand:
 			bool: if the setting succeeded
 		"""
 		try:
+			self.__log.warn(rospy.get_name() + f" attempting to set {self.name} joint values \n{self.__get_q_str()}")
 			joint_trajectory = self.__make_jt(des_state, interpolation_time=interpolation_time)
 			self.__hand_commander.run_joint_trajectory_unsafe(joint_trajectory,wait=block)
+			self.__log.success(rospy.get_name() + " succeeded...")
 			return True
 		except:
+			self.__log.error(f"failed to set {self.name} joint values \n{self.__get_q_str()}...")
 			return False
 
 		# joints_states = {'rh_FFJ1': 90, 'rh_FFJ2': 90, 'rh_FFJ3': 90, 'rh_FFJ4': 0.0,
@@ -274,6 +285,12 @@ class ShadowHand:
 		#            'rh_THJ1': 40, 'rh_THJ2': 35, 'rh_THJ3': 0.0, 'rh_THJ4': 65, 'rh_THJ5': 15,
 		#            'rh_WRJ1': 0.0, 'rh_WRJ2': 0.0}
 		# 'rh_THJ1', 'rh_THJ2', 'rh_THJ3', 'rh_THJ4', 'rh_THJ5'
+
+	def __get_q_str(self):
+		q_str = ""
+		for jn in self.joints_names:
+			q_str += f"\t{jn}: {self.q[jn]}\n"
+		return q_str
 
 	def __make_jt(self,state: Dict[Union[ShadowFinger,ShadowWrist],List], interpolation_time: int = 3) -> JointTrajectory:
 		joint_values_dict = self.__get_q_as_dict(state)

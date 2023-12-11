@@ -30,6 +30,7 @@ from moveit_msgs.msg import (
 )
 import pickle
 import os
+import sys
 
 def get_model_pose(model_name) -> Pose:
     rospy.wait_for_service('/gazebo/get_model_state')
@@ -81,6 +82,9 @@ def load_robot_traj(file_path:str) -> RobotTrajectory:
     return plan
 
 def main() -> None:
+
+    # keep_alive(rospy.get_name())
+
     log = Logger()
 
     # waiting period for robot hand to start up...
@@ -102,7 +106,7 @@ def main() -> None:
     mg = MoveGroupCommander(name)
     sh = ShadowHand()
 
-    q_thumb_max = 1.22 # rad, 70 in deg
+    q_thumb_max = 1.22 # rad, 70 deg
     
     open = {
         sh.index_finger:  [0.0, 0.0, 0.0, 0.0],
@@ -174,6 +178,9 @@ def main() -> None:
         box_1_grasp_pose
     ]
     
+    sleep_time = 3
+    log.warn(f"waiting {sleep_time} s. for move group...")
+    rospy.sleep(sleep_time)
     print("I am opening my hand == > ",sh.set_q(open,interpolation_time=3,block=True))
 
 

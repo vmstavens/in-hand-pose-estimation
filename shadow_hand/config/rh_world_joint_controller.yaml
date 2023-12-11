@@ -1,0 +1,8 @@
+rh_world_joint_controller:
+  type: position_controllers/JointPositionController
+  joint: rh_world_joint  # Add other joints as needed
+  # joint: shadowhand_motor/rh_world_joint  # Add other joints as needed
+  pid:
+    p: 100.0
+    i: 10.0
+    d: 0.0

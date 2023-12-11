@@ -23,7 +23,8 @@
 
     <physics type="ode">
       <!-- disable gravity -->
-      <gravity>0.000000 0.000000 -0.0000001</gravity>
+      <gravity>0.000000 0.000000 -9.82</gravity>
+      <!-- <gravity>0.000000 0.000000 -0.0000001</gravity> -->
       <ode>
         <solver>
           <type>quick</type>
