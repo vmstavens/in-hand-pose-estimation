@@ -30,8 +30,9 @@ from moveit_msgs.msg import (
 )
 import pickle
 import os
+import sys
 
-def get_model_pose(model_name):
+def get_model_pose(model_name) -> Pose:
     rospy.wait_for_service('/gazebo/get_model_state')
     try:
         get_model_state = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
@@ -81,7 +82,11 @@ def load_robot_traj(file_path:str) -> RobotTrajectory:
     return plan
 
 def main() -> None:
+
+    # keep_alive(rospy.get_name())
+
     log = Logger()
+
     # waiting period for robot hand to start up...
     waiting_time: int = 10  # s
     rospy.loginfo(f"waiting {waiting_time} for hand to start...")
@@ -98,15 +103,34 @@ def main() -> None:
     # 	7) attempt to find digit tactile plugin and mesh for gazebo.
 
     name = "right_arm_and_manipulator"
-
     mg = MoveGroupCommander(name)
+    sh = ShadowHand()
 
-    # x y z r p y
+    q_thumb_max = 1.22 # rad, 70 deg
+    
+    open = {
+        sh.index_finger:  [0.0, 0.0, 0.0, 0.0],
+        sh.middle_finger: [0.0, 0.0, 0.0, 0.0],
+        sh.ring_finger:   [0.0, 0.0, 0.0, 0.0],
+        sh.little_finger: [0.0, 0.0, 0.0, 0.0],
+        sh.thumb_finger:  [0.0, 0.0, 0.0, q_thumb_max]
+    }
+
+    close_angle = m.pi/7
+
+    close = {
+        sh.index_finger:  [close_angle, close_angle, close_angle],
+        sh.middle_finger: [close_angle, close_angle, close_angle],
+        sh.ring_finger:   [close_angle, close_angle, close_angle],
+        sh.little_finger: [close_angle, close_angle, close_angle],
+        sh.thumb_finger:  [close_angle, close_angle, close_angle]
+    }
+
     d_grasp = 0.1
     # d_grasp = 0.08
     d_place = 0.5
-
-    flat_orientation = geometry.euler2quaternion(m.pi/2.0, 0.0, m.pi)
+    
+    flat_orientation: Quaternion = geometry.euler2quaternion(m.pi/2.0, 0.0, m.pi)
 
     home: Pose = Pose(
         position = copy.deepcopy(mg.get_current_pose().pose.position),
@@ -121,7 +145,8 @@ def main() -> None:
     box_1_grasp_pose.position.y -= 0.05
 
     box_2_grasp_pose: Pose = box_2_pose
-    box_2_grasp_pose.position.z += d_grasp
+    box_2_grasp_pose.position.z += d_grasp + 0.15
+    box_2_grasp_pose.position.y -= 0.05
 
     middle_pose: Pose = Pose(
         position = Point(
@@ -138,6 +163,7 @@ def main() -> None:
             z = box_1_grasp_pose.position.z + d_place),
         orientation = flat_orientation
     )
+
     box_2_hover_pose: Pose = Pose(
         position = Point(
             x = box_2_grasp_pose.position.x,
@@ -147,74 +173,76 @@ def main() -> None:
     )
 
     way_to_box_1 = [
-        # home,
         middle_pose,
         box_1_hover_pose,
         box_1_grasp_pose
     ]
+    
+    sleep_time = 3
+    log.warn(f"waiting {sleep_time} s. for move group...")
+    rospy.sleep(sleep_time)
+    print("I am opening my hand == > ",sh.set_q(open,interpolation_time=3,block=True))
+
+
+    (plan_1, fraction_1) = mg.compute_cartesian_path(waypoints=way_to_box_1, eef_step=0.01, jump_threshold=0.0,avoid_collisions=True)
+    plan_1_success = mg.execute(plan_1, wait=True)
+    print("I am moving my robot == > ",plan_1_success)
+    plan_1_path = "/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/shadow_hand/experiments/joint_trajectories/plan_1.pickle"
+    save_robot_traj(plan_1,plan_1_path)
+
     way_to_box_2 = [
-        box_1_grasp_pose,
-        box_1_hover_pose,
+        # Pose(position=home.position, orientation=flat_orientation),
+        # box_1_grasp_pose,
+        # box_1_hover_pose,
         middle_pose,
         box_2_hover_pose,
         box_2_grasp_pose
     ]
+
+    (plan_2, fraction_2) = mg.compute_cartesian_path(waypoints=way_to_box_2, eef_step=0.01, jump_threshold=0.0,avoid_collisions=True)
+
+    print("I am closing my hand == > ",sh.set_q(close,interpolation_time=3,block=True))
+
+    #  -- ######################################################################################
+    # Get the current joint values
+    current_joint_values = mg.get_current_joint_values()
+
+    # Find the index of 'rh_WRJ1' in the list of active joints
+    index_of_rh_WRJ1 = mg.get_active_joints().index('rh_WRJ1')
+
+    # Set the joint value for 'rh_WRJ1' to be closer to the expected value
+    current_joint_values[index_of_rh_WRJ1] = 0.0543615
+
+    # Set the modified joint values as the target
+    mg.set_joint_value_target(current_joint_values)
+    #  -- ######################################################################################
+
+    print("I am moving my robot == > ",mg.execute(plan_2, wait=True))
+    plan_2_path = "/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/shadow_hand/experiments/joint_trajectories/plan_2.pickle"
+    save_robot_traj(plan_2,plan_2_path)
+
+    print("I am closing my hand == > ",sh.set_q(open,interpolation_time=3,block=True))
 
     way_to_return = [
         box_2_hover_pose,
         home
     ]
     
-    (plan_1, fraction_1) = mg.compute_cartesian_path(waypoints=way_to_box_1, eef_step=0.01, jump_threshold=0.0)
-    (plan_2, fraction_2) = mg.compute_cartesian_path(waypoints=way_to_box_2, eef_step=0.01, jump_threshold=0.0)
-    (plan_3, fraction_3) = mg.compute_cartesian_path(waypoints=way_to_return, eef_step=0.01, jump_threshold=0.0)
+    (plan_3, fraction_3) = mg.compute_cartesian_path(waypoints=way_to_return, eef_step=0.01, jump_threshold=0.0,avoid_collisions=True)
+    plan_3_path = "/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/shadow_hand/experiments/joint_trajectories/plan_3.pickle"
+    save_robot_traj(plan_3,plan_3_path)
+
+    print("I am moving my robot == > ",mg.execute(plan_3, wait=True))
 
     log.warn(f"fractions 1: {fraction_1}, 2: {fraction_2}, 3: {fraction_3}")
 
+
     # mg.compute_cartesian_path(waypoints=waypoints)
-    display_trajectory = moveit_msgs.msg.DisplayTrajectory()
-    display_trajectory_publisher = rospy.Publisher("/move_group/display_planned_path",moveit_msgs.msg.DisplayTrajectory,queue_size=20)
-    display_trajectory.trajectory_start = mg.get_current_state()
-    display_trajectory.trajectory.append(plan_1)
-    display_trajectory_publisher.publish(display_trajectory)
-
-    sh = ShadowHand()
-
-    q_thumb_max = 1.22 # rad, 70 in deg
-    
-    open = {
-        sh.index_finger:  [0.0, 0.0, 0.0],
-        sh.middle_finger: [0.0, 0.0, 0.0],
-        sh.ring_finger:   [0.0, 0.0, 0.0],
-        sh.little_finger: [0.0, 0.0, 0.0],
-        sh.thumb_finger:  [0.0, 0.0, 0.0, q_thumb_max]
-    }
-
-    close_angle = m.pi/7
-    # close_angle = m.pi/5.5
-
-    close = {
-        sh.index_finger:  [close_angle, close_angle, close_angle],
-        sh.middle_finger: [close_angle, close_angle, close_angle],
-        sh.ring_finger:   [close_angle, close_angle, close_angle],
-        sh.little_finger: [close_angle, close_angle, close_angle],
-        sh.thumb_finger:  [close_angle, close_angle, close_angle]
-    }
-
-    # plan_1_path = "/home/user/projects/shadow_robot/base/src/in_hand_pose_estimation/shadow_hand/experiments/joint_trajectories/plan_1.pickle"
-
-    # save_robot_traj(plan_1,plan_1_path)
-    # plan_1 = load_robot_traj(plan_1_path)
-    # execute motion
-    mg.execute(plan_1, wait=True)
-    time.sleep(2)
-    sh.set_q(open)
-    time.sleep(2)
-    sh.set_q(close)
-    # sh.hand_commander.attach_object("cube_1")
-    # sh.set_q(close,interpolation_time=1)
-
-    mg.execute(plan_2, wait=True)
+    # display_trajectory = moveit_msgs.msg.DisplayTrajectory()
+    # display_trajectory_publisher = rospy.Publisher("/move_group/display_planned_path",moveit_msgs.msg.DisplayTrajectory,queue_size=20)
+    # display_trajectory.trajectory_start = mg.get_current_state()
+    # display_trajectory.trajectory.append(plan_1)
+    # display_trajectory_publisher.publish(display_trajectory)
 
 
 

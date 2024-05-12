@@ -14,6 +14,10 @@ from shadow_hand import ShadowHand
 import math as m
 
 def main() -> None:
+	log = Logger()
+
+
+
 
 	# TODO : 
 	# 	1) perform planned motion
@@ -27,27 +31,47 @@ def main() -> None:
 
 	# waiting period for robot hand to start up...
 	waiting_time: int = 10  # s
-	rospy.loginfo(f"waiting {waiting_time} for hand to start...")
+	log.warn(f"waiting {waiting_time} for hand to start...")
 	time.sleep(waiting_time)
-
-	q_max = 1.22
 
 	# joint configuration, from base to tip (does this make contact with the pen? yes)
 	# q: list = [0.0, 0.0, 0.0, q_max,0.0]
-	q: list = [0.0, 0.0, 0.0]
+	q: list = [0.0, m.pi/2, 0.0]
 	
 	# q: list = [0.0, m.pi / 2.0, 0.0]
 
 	# create shadow hand object
 	sh = ShadowHand()
+	q_thumb_max = 1.22 # rad, 70 deg
+	open = {
+		sh.index_finger:  [0.0, 0.0, 0.0, 0.0],
+		sh.middle_finger: [0.0, 0.0, 0.0, 0.0],
+		sh.ring_finger:   [0.0, 0.0, 0.0, 0.0],
+		sh.little_finger: [0.0, 0.0, 0.0, 0.0],
+		sh.thumb_finger:  [0.0, 0.0, 0.0, q_thumb_max],
+		sh.wrist:         [0.0, 0.0]
+	}
+
+	close_angle = m.pi/5
+
+	close = {
+		sh.index_finger:  [close_angle, close_angle, close_angle],
+		sh.middle_finger: [close_angle, close_angle, close_angle],
+		sh.ring_finger:   [close_angle, close_angle, close_angle],
+		sh.little_finger: [close_angle, close_angle, close_angle],
+		sh.thumb_finger:  [close_angle, close_angle, close_angle]
+	}
  
-	# set the index finger to q
 	sh.index_finger.set_q(q)
 
-	time.sleep(5)
+	# set the index finger to q
+	sh.set_q(open,interpolation_time=3,block=True)
+
+	time.sleep(2)
+	sh.set_q(close,interpolation_time=3,block=True)
  
 	# init logger and directory
-	log = Logger()
+	
 	# 1.1751135385968023, 1.1811629668337202
  
 	# print tactile information when available

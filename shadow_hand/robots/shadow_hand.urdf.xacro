@@ -24,6 +24,7 @@
 
 	<link name="world" />
 	<xacro:if value="${'$(arg side)' == 'right'}">
+		<!-- <joint name="rh_world_joint" type="floating"> -->
 		<joint name="rh_world_joint" type="fixed">
 			<parent link="world" />
 			<child link="rh_forearm" />

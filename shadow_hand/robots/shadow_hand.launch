@@ -34,9 +34,7 @@
 	<arg name="initial_robot_position"    default="0.0 0.0 0.1" if="$(eval (hand and arm) )" />
 	<arg name="initial_robot_orientation" default="0.0 0.0 0.0" if="$(eval (hand and arm) )" />
 
-	<!-- <arg name="initial_robot_position" value="0.0 0.0 1.0" if="$(eval hand and not arm)"  />
-	<arg name="initial_robot_orientation" value="0.0 0.0 0.0" if="$(eval hand and not arm)"  /> -->
-	
+	<param name="initial_robot_position" value="$(arg initial_robot_position)" />
 
 	<!-- the robot state publisher publishing frequency  -->
 	<arg name="robot_state_pub_frequency" default="250" />
@@ -69,6 +67,7 @@
 	<!-- set to true to spawn the position controllers for the hands-->
 	<arg name="hand_ctrl" default="$(arg hand)" />
 	<!-- set to true to spawn trajectory controllers for the hands(the trajectory controller overwrites continuously the joint position command, preventing direct control via topics-->
+	<!-- <arg name="hand_trajectory" default="false" /> -->
 	<arg name="hand_trajectory" default="true" />
 	<!-- hand type, options: hand_e, hand_g or hand_c -->
 	<arg name="hand_type" default="hand_e" />

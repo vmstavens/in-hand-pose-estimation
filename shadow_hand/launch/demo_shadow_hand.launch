@@ -28,8 +28,8 @@
 	<arg name="biotac_sim" default="false" />
 	<arg if="$(eval arg('tac_sensors') == 'bt_2p')" name="biotac_sim" value="true" />
 	<!-- position of the hand's spawn point. Orientation of the hand's spawn point, measured radians in WORLD Roll-Pitch-Yaw (1.57 = pi/2 = 90 deg) -->
-	<!-- <arg name="initial_robot_position"    default="0.0 0.0 1.0" />
-	<arg name="initial_robot_orientation" default="1.57 -1.57 0.0" /> -->
+	<arg name="initial_robot_position"    default="0.0 0.0 0.5" />
+	<arg name="initial_robot_orientation" default="1.57 -1.57 0.0" />
 	<!-- <arg name="hand_pose" default="-x 0.0 -y 0.0 -z 1.0 -R 1.57 -P -1.57 -Y 0.0" /> -->
 
 	<!-- // World specific arguments ///////////////////////////////////////////////////////////////////////// -->
@@ -41,16 +41,25 @@
 
 	<!-- the pose of the  -->
 	<!-- <arg name="prop_pose" default="-x 0.086821 -y -0.281485 -z 1.007564 -R 0.0 -P 0.0 -Y 0.0" /> -->
-	<arg name="prop_pose" default="-x 0.134796 -y -0.281485 -z 0.991616 -R 0.0 -P 0.0 -Y 0.0" />
+	<arg name="prop_pose" default="-x 0.134796 -y -0.281485 -z 2.991616 -R 0.0 -P 0.0 -Y 0.0" />
+	<!-- <arg name="prop_pose" default="-x 0.134796 -y -0.281485 -z 0.991616 -R 0.0 -P 0.0 -Y 0.0" /> -->
+	<!-- <arg name="prop_pose" default="-x 0.134796 -y -0.281485 -z 0.991616 -R 0.0 -P 0.0 -Y 0.0" /> -->
+
+  <!-- model gravity -->
+  <arg name="model_gravity" default="true"/>
+  
+  <!-- set model gravity -->
+  <arg name="model_name_suffix" default="static" if="$(eval not model_gravity)"/>
+  <arg name="model_name_suffix" value="dynamic"  if="$(eval     model_gravity)"/>
 
 	<!-- spawn the prop -->
 	<group unless="$(eval arg('prop') == 'False')">
-		<node name="spawn_prop" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-file $(arg model_path)$(arg prop)/model_static.sdf -sdf $(arg prop_pose) -model $(arg prop)"/>
+		<node name="spawn_prop" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-file $(arg model_path)$(arg prop)/model_$(arg model_name_suffix).sdf -sdf $(arg prop_pose) -model $(arg prop)"/>
 	</group>
 	<!-- // Launch project nodes ///////////////////////////////////////////////////////////////////////// -->
 
 	<!-- finger_control_demo node -->
-	<node pkg="shadow_hand" name="finger_control_demo" type="finger_control_demo.py" output="$(arg output)" />
+	<node pkg="shadow_hand" name="hand_control_demo" type="hand_control_demo.py" output="$(arg output)" />
 
 	<!-- // Environment variables ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
@@ -70,9 +79,9 @@
 		<arg name="start_home" value="$(arg start_home)" />
 		<arg name="tac_sensors" value="$(arg tac_sensors)" />
 		<arg name="biotac_sim" value="$(arg biotac_sim)" />
+		<arg name="initial_robot_orientation" value="$(arg initial_robot_orientation)" />
+		<arg name="initial_robot_position" value="$(arg initial_robot_position)" />
 	</include>
-		<!-- <arg name="initial_robot_position" value="'$(arg initial_robot_position)'" />
-		<arg name="initial_robot_orientation" value="'$(arg initial_robot_orientation)'" /> -->
 
 	<!-- // Load in world ///////////////////////////////////////////////////////////////////////// -->
 
@@ -83,6 +92,12 @@
 		<arg name="world_name" value="$(arg world_name)" />
 		<arg name="gui" value="$(arg gui)" />
 		<arg name="paused" value="$(arg paused)" />
+
+		<arg name="physics" value="dart"/> 
+
 	</include>
+
+	<rosparam file="$(find shadow_hand)/config/rh_world_joint_controller.yaml" command="load" />
+	<node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="rh_world_joint_controller" />
 
 </launch>
