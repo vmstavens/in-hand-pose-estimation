@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Staven"
+  given-names: "Victor M"
+title: "in_hand_pose_estimation"
+version: 1.0
+date-released: 2023
+url: "https://github.com/vmstavens/in_hand_pose_estimation/tree/main"
